@@ -1,7 +1,12 @@
 import OfficeController from "@/controller/office";
 import requireAuth from "@/middleware/requireAuth";
 import validate from "@/middleware/validate";
-import { createOfficeBulkSchema, createOfficeSchema } from "@/schema/office";
+import { bulkDeleteSchema, idParamSchema } from "@/schema/common";
+import {
+  createOfficeBulkSchema,
+  createOfficeSchema,
+  updateOfficeSchema,
+} from "@/schema/office";
 import express from "express";
 const router = express.Router();
 
@@ -15,6 +20,21 @@ router.post("/create/bulk", [
   validate(createOfficeBulkSchema),
   OfficeController.createOfficeBulk,
 ]);
-router.get("/", OfficeController.getAllOffice);
+router.patch("/update/:id", [
+  requireAuth,
+  validate(updateOfficeSchema),
+  OfficeController.updateOffice,
+]);
+router.delete("/delete/:id", [
+  requireAuth,
+  validate(idParamSchema),
+  OfficeController.deleteOffice,
+]);
+router.delete("/delete/bulk", [
+  requireAuth,
+  validate(bulkDeleteSchema),
+  OfficeController.deleteOfficesBulk,
+]);
+router.get("/", [requireAuth, OfficeController.getAllOffice]);
 
 export default router;

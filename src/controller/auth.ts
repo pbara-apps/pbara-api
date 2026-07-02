@@ -12,7 +12,6 @@ const AuthController = {
         data: { user, token },
       });
     } catch (error) {
-      console.log("Error: ", error);
       next(error);
     }
   },

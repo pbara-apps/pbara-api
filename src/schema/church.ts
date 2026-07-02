@@ -16,3 +16,7 @@ export const createChurchSchema = z.object({
 export const createBulkChurchSchema = z.object({
   body: z.array(churchBodySchema),
 });
+
+export const updateChurchSchema = z.object({
+  body: churchBodySchema.partial(),
+});

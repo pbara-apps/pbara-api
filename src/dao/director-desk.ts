@@ -5,6 +5,11 @@ const DirectorDeskDao = {
   async createDirectorDesk(directorDesk: DirectorDeskTypes) {
     return await DirectorDeskModel.create(directorDesk);
   },
+  async getActiveDirectorDesk() {
+    return await DirectorDeskModel.find({ current: true })
+      .populate("director_id")
+      .exec();
+  },
   async getDirectorDesk(directorId: string) {
     return await DirectorDeskModel.find({ director_id: directorId })
       .populate("director_id")

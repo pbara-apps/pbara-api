@@ -46,9 +46,36 @@ const executiveSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
+    title: {
+      type: String,
+      required: true,
+      default: "Director's Desk",
+    },
+    description: {
+      type: String,
+      required: true,
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
+
+executiveSchema.virtual("church", {
+  ref: "Church",
+  localField: "church_id",
+  foreignField: "_id",
+  justOne: true,
+});
+
+executiveSchema.virtual("office", {
+  ref: "Office",
+  localField: "office_id",
+  foreignField: "_id",
+  justOne: true,
+});
 
 const ExecutiveModel = mongoose.model("Executive", executiveSchema);
 

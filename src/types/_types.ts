@@ -21,6 +21,7 @@ export interface ChurchTypes {
 }
 
 export interface OfficeTypes {
+  _id: string;
   name?: string;
   description?: string;
 }

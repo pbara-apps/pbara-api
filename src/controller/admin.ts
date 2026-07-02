@@ -1,0 +1,28 @@
+import AdminService from "@/service/admin";
+import { NextFunction, Request, Response } from "express";
+
+const AdminController = {
+  async getDashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const dashboard = await AdminService.getDashboard();
+      return res
+        .status(200)
+        .json({ message: "Dashboard fetched successfully", data: dashboard });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async getDirectorDesk(req: Request, res: Response, next: NextFunction) {
+    try {
+      const directorDesk = await AdminService.getDirectorDesk();
+      return res.status(200).json({
+        message: "Director desk fetched successfully",
+        data: directorDesk,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+};
+
+export default AdminController;

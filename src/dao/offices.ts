@@ -15,11 +15,23 @@ const OfficeDao = {
   async findAll() {
     return await OfficeModel.find().exec();
   },
+  async findById(id: string) {
+    return await OfficeModel.findById(id).exec();
+  },
   async updateOffice(id: string, office: Office) {
-    return await OfficeModel.updateOne({ _id: id }, office).exec();
+    return await OfficeModel.findByIdAndUpdate(id, office, { new: true }).exec();
   },
   async deleteOffice(id: string) {
-    await OfficeModel.findByIdAndDelete(id).exec();
+    return await OfficeModel.findByIdAndDelete(id).exec();
+  },
+  async deleteMany(ids: string[]) {
+    return await OfficeModel.deleteMany({ _id: { $in: ids } }).exec();
+  },
+  async countAll() {
+    return await OfficeModel.countDocuments().exec();
+  },
+  async findByName(name: string) {
+    return await OfficeModel.findOne({ name }).exec();
   },
 };
 

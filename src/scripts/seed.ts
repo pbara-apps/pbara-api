@@ -40,7 +40,12 @@ async function seedAdminUser() {
   const password = process.env.SEED_ADMIN_PASSWORD ?? DEFAULT_ADMIN.password;
   const existing = await ExecutiveModel.findOne({ email }).exec();
   if (existing) {
-    return { created: false, email };
+    if (existing.role !== "super_admin") {
+      existing.role = "super_admin";
+      await existing.save();
+      return { created: false, email, updatedRole: true };
+    }
+    return { created: false, email, updatedRole: false };
   }
 
   const directorOffice = await OfficeModel.findOne({ name: "Director" }).exec();
@@ -65,6 +70,7 @@ async function seedAdminUser() {
     password: hashedPassword,
     title: DEFAULT_ADMIN.title,
     description: DEFAULT_ADMIN.description,
+    role: "super_admin",
   });
 
   return { created: true, email };

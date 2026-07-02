@@ -19,6 +19,7 @@ const AuthService = {
       name: user.name,
       office: user.office_id,
       church: user.church_id,
+      role: user.role ?? "admin",
     });
 
     const { password: _pw, ...safeUser } = user.toObject();

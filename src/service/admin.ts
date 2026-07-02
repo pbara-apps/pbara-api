@@ -1,3 +1,4 @@
+import MessageDao from "@/dao/message";
 import AuditLogDao from "@/dao/audit-log";
 import ChurchDao from "@/dao/church";
 import EventDao from "@/dao/event";
@@ -31,6 +32,8 @@ const AdminService = {
       totalGallery,
       activeGallery,
       recentLogs,
+      totalMessagesCount,
+      unreadMessages,
     ] = await Promise.all([
       ChurchDao.countAll(),
       ChurchDao.countActive(),
@@ -44,6 +47,8 @@ const AdminService = {
       GalleryDao.countAll(),
       GalleryDao.countActive(),
       AuditLogDao.findAll(8),
+      MessageDao.countAll(),
+      MessageDao.countUnread(),
     ]);
 
     const recentActivity: ActivityItem[] = recentLogs.map((log) => ({
@@ -68,7 +73,8 @@ const AdminService = {
       upcomingEvents,
       totalGallery,
       activeGallery,
-      totalMessages: 0,
+      totalMessages: totalMessagesCount,
+      unreadMessages,
       recentActivity,
     };
   },

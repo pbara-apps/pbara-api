@@ -2,12 +2,13 @@
   "name": "pbara-api",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "api/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec tsx src/index.ts",
     "start": "tsx src/index.ts",
-    "build": "tsc --noEmit",
+    "build": "node build.mjs",
+    "vercel-build": "node build.mjs",
     "seed": "tsx src/scripts/seed.ts"
   },
   "repository": {
@@ -43,6 +44,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^22.13.10",
     "@vercel/node": "^5.1.14",
+    "esbuild": "^0.25.12",
     "nodemon": "^3.1.14",
     "tsx": "^4.22.3",
     "typescript": "^5.8.2"

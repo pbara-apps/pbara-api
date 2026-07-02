@@ -24,12 +24,24 @@ const connectDB = async () => {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(DB_URI, { dbName: "pbara_db" });
+    cached.promise = mongoose
+      .connect(DB_URI, {
+        dbName: "pbara_db",
+        serverSelectionTimeoutMS: 10000,
+      })
+      .then((conn) => {
+        console.log("Connected to MongoDB");
+        cached.conn = conn;
+        return conn;
+      })
+      .catch((error) => {
+        cached.promise = null;
+        console.error("MongoDB connection failed:", error);
+        throw error;
+      });
   }
 
-  cached.conn = await cached.promise;
-  console.log("Connected to MongoDB");
-  return cached.conn;
+  return await cached.promise;
 };
 
 export default connectDB;

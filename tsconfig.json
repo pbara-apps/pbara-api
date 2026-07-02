@@ -3,6 +3,7 @@
         "module": "ESNext",
         "moduleResolution": "bundler",
         "target": "ESNext",
+        "baseUrl": ".",
         "allowJs": true,
         "skipLibCheck": true,
         "strict": true,

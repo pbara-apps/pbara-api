@@ -8,6 +8,7 @@ import express from "express";
 const router = express.Router();
 
 router.get("/public", NewsController.getPublic);
+router.get("/public/:idOrSlug", NewsController.getPublicByIdOrSlug);
 router.post("/create", [
   requireAuth,
   validate(createNewsSchema),

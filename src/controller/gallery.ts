@@ -13,6 +13,17 @@ const GalleryController = {
       next(error);
     }
   },
+  async createBulk(req: Request, res: Response, next: NextFunction) {
+    try {
+      const items = await GalleryService.createBulk(req.body, getActor(req));
+      return res.status(201).json({
+        message: `${items.length} gallery items created successfully`,
+        data: items,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
       const items = await GalleryService.getAll();

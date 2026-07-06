@@ -11,4 +11,7 @@ export const galleryBodySchema = z.object({
 });
 
 export const createGallerySchema = z.object({ body: galleryBodySchema });
+export const createBulkGallerySchema = z.object({
+  body: z.array(galleryBodySchema).min(1).max(50),
+});
 export const updateGallerySchema = z.object({ body: galleryBodySchema.partial() });

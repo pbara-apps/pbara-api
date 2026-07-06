@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import NewsModel from "@/models/news";
 
 type NewsPayload = {
@@ -22,6 +23,31 @@ const NewsDao = {
   async findPublic() {
     return await NewsModel.find({ status: "published" })
       .sort({ createdAt: -1 })
+      .exec();
+  },
+  async findPublicByIdOrSlug(idOrSlug: string) {
+    const isObjectId =
+      /^[a-f\d]{24}$/i.test(idOrSlug) &&
+      String(new mongoose.Types.ObjectId(idOrSlug)) === idOrSlug;
+
+    if (isObjectId) {
+      const byId = await NewsModel.findOne({
+        _id: idOrSlug,
+        status: "published",
+      }).exec();
+      if (byId) return byId;
+    }
+
+    return await NewsModel.findOne({ slug: idOrSlug, status: "published" }).exec();
+  },
+  async findRelated(category: string, excludeId: string, limit = 4) {
+    return await NewsModel.find({
+      status: "published",
+      category,
+      _id: { $ne: excludeId },
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit)
       .exec();
   },
   async findById(id: string) {

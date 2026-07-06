@@ -24,6 +24,20 @@ const GalleryService = {
     });
     return item;
   },
+  async createBulk(items: GalleryInput[], actor?: AuditActor) {
+    const created = await GalleryDao.createMany(items);
+    for (const item of created) {
+      await logAudit({
+        action: "created",
+        entityType: "gallery",
+        entityId: String(item._id),
+        entityTitle: item.title,
+        actor,
+        detail: item.type,
+      });
+    }
+    return created;
+  },
   async getAll() {
     return await GalleryDao.findAll();
   },

@@ -40,6 +40,19 @@ const NewsController = {
       next(error);
     }
   },
+  async getPublicByIdOrSlug(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await NewsService.getPublicByIdOrSlug(
+        req.params.idOrSlug as string,
+      );
+      return res.status(200).json({
+        message: "News article fetched successfully",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
   async update(req: Request, res: Response, next: NextFunction) {
     try {
       const news = await NewsService.update(

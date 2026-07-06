@@ -14,6 +14,9 @@ const GalleryDao = {
   async create(data: GalleryPayload) {
     return await GalleryModel.create(data);
   },
+  async createMany(data: GalleryPayload[]) {
+    return await GalleryModel.insertMany(data);
+  },
   async findAll() {
     return await GalleryModel.find().sort({ sort_order: 1, createdAt: -1 }).exec();
   },

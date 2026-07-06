@@ -55,6 +55,20 @@ const NewsService = {
   async getPublic() {
     return await NewsDao.findPublic();
   },
+  async getPublicByIdOrSlug(idOrSlug: string) {
+    const article = await NewsDao.findPublicByIdOrSlug(idOrSlug);
+    if (!article) {
+      const err = new Error("News article not found") as Error & { status?: number };
+      err.status = 404;
+      throw err;
+    }
+    const related = await NewsDao.findRelated(
+      article.category,
+      String(article._id),
+      4,
+    );
+    return { article, related };
+  },
   async getById(id: string) {
     const item = await NewsDao.findById(id);
     if (!item) {

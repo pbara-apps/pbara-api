@@ -2,7 +2,7 @@ import z from "zod";
 
 export const newsBodySchema = z.object({
   title: z.string().min(3),
-  slug: z.string().min(3).optional(),
+  slug: z.string().optional(),
   category: z.string().min(2),
   excerpt: z.string().min(10),
   content: z.string().optional(),

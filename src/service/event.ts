@@ -5,6 +5,7 @@ type EventInput = {
   title: string;
   category: string;
   date: string;
+  endDate?: string | null;
   venue: string;
   description: string;
   image?: string | null;

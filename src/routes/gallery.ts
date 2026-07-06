@@ -2,7 +2,11 @@ import GalleryController from "@/controller/gallery";
 import requireAuth from "@/middleware/requireAuth";
 import validate from "@/middleware/validate";
 import { bulkDeleteSchema, idParamSchema } from "@/schema/common";
-import { createGallerySchema, updateGallerySchema } from "@/schema/gallery";
+import {
+  createBulkGallerySchema,
+  createGallerySchema,
+  updateGallerySchema,
+} from "@/schema/gallery";
 import express from "express";
 
 const router = express.Router();
@@ -12,6 +16,11 @@ router.post("/create", [
   requireAuth,
   validate(createGallerySchema),
   GalleryController.create,
+]);
+router.post("/create/bulk", [
+  requireAuth,
+  validate(createBulkGallerySchema),
+  GalleryController.createBulk,
 ]);
 router.patch("/update/:id", [
   requireAuth,

@@ -1,8 +1,9 @@
 import AuditLogModel from "@/models/audit-log";
+import type { AuditAction, AuditEntityType } from "@/helpers/audit-logger";
 
 type AuditPayload = {
-  action: string;
-  entity_type: string;
+  action: AuditAction;
+  entity_type: AuditEntityType;
   entity_id?: string | null;
   entity_title: string;
   actor_id?: string | null;
@@ -15,7 +16,10 @@ const AuditLogDao = {
     return await AuditLogModel.create(entry);
   },
   async findAll(limit = 100) {
-    return await AuditLogModel.find().sort({ createdAt: -1 }).limit(limit).exec();
+    return await AuditLogModel.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .exec();
   },
   async countAll() {
     return await AuditLogModel.countDocuments().exec();

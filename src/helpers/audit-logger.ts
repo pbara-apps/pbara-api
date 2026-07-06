@@ -18,7 +18,7 @@ export async function logAudit(params: {
   action: AuditAction;
   entityType: AuditEntityType;
   entityId?: string;
-  entityTitle: string;
+  entityTitle?: string | null;
   actor?: AuditActor;
   detail?: string;
 }) {
@@ -26,7 +26,7 @@ export async function logAudit(params: {
     action: params.action,
     entity_type: params.entityType,
     entity_id: params.entityId ?? null,
-    entity_title: params.entityTitle,
+    entity_title: params.entityTitle ?? "Unknown",
     actor_id: params.actor?.id ?? null,
     actor_name: params.actor?.name ?? "System",
     detail: params.detail ?? null,

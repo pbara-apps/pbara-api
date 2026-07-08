@@ -4,7 +4,11 @@ import { NextFunction, Request, Response } from "express";
 const AuditController = {
   async getLogs(req: Request, res: Response, next: NextFunction) {
     try {
-      const limit = Number(req.query.limit ?? 100);
+      const rawLimit = Number(req.query.limit ?? 100);
+      const limit =
+        Number.isFinite(rawLimit) && rawLimit > 0
+          ? Math.min(Math.floor(rawLimit), 500)
+          : 100;
       const logs = await AuditService.getLogs(limit);
       return res
         .status(200)

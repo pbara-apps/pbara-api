@@ -10,7 +10,7 @@ const executivebodySchema = z.object({
   start_year: z.number().min(2000).or(z.string().min(4)),
   end_year: z.number().optional().or(z.string().optional()),
   status: z.enum(["active", "inactive", "completed"]),
-  password: z.string().default("password"),
+  password: z.string().min(8),
   title: z.string().optional(),
   description: z.string().optional(),
 });
@@ -30,7 +30,7 @@ export const updateExecutiveSchema = z.object({
     start_year: z.number().min(2000).or(z.string().min(4)).optional(),
     end_year: z.number().optional().or(z.string().optional()).optional(),
     status: z.enum(["active", "inactive", "completed"]).optional(),
-    password: z.string().default("password").optional(),
+    password: z.string().min(8).optional(),
     title: z.string().optional().optional(),
     description: z.string().optional().optional(),
   }),

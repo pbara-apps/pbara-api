@@ -23,6 +23,17 @@ const AdminController = {
       next(error);
     }
   },
+  async updateDirectorDesk(req: Request, res: Response, next: NextFunction) {
+    try {
+      const directorDesk = await AdminService.updateDirectorDesk(req.body);
+      return res.status(200).json({
+        message: "Director desk updated successfully",
+        data: directorDesk,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default AdminController;

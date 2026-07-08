@@ -12,10 +12,6 @@ const requireSuperAdmin = async (
     return res.status(401).json({ message: "Unauthorized", status: false });
   }
 
-  if (isSuperAdmin(authUser.role)) {
-    return next();
-  }
-
   const executive = await ExecutiveDao.findById(authUser.id);
   if (executive && isSuperAdmin(executive.role)) {
     return next();

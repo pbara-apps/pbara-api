@@ -10,3 +10,11 @@ const directorDeskBodySchema = z.object({
 export const createDirectorDeskSchema = z.object({
   body: directorDeskBodySchema,
 });
+
+export const updateDirectorDeskSchema = z.object({
+  body: z.object({
+    title: z.string().min(3).optional(),
+    description: z.string().min(10).optional(),
+    image: z.string().optional().nullable(),
+  }),
+});

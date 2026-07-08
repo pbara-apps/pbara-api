@@ -19,7 +19,7 @@ const EventDao = {
     return await EventModel.find().sort({ createdAt: -1 }).exec();
   },
   async findPublic() {
-    return await EventModel.find().sort({ createdAt: -1 }).exec();
+    return await EventModel.find({ status: "open" }).sort({ createdAt: -1 }).exec();
   },
   async findById(id: string) {
     return await EventModel.findById(id).exec();

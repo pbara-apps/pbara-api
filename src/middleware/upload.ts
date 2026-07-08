@@ -2,7 +2,7 @@ import multer from "multer";
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (_req, file, cb) => {
     const allowed =
       file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/");

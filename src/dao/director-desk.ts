@@ -7,12 +7,12 @@ const DirectorDeskDao = {
   },
   async getActiveDirectorDesk() {
     return await DirectorDeskModel.find({ current: true })
-      .populate("director_id")
+      .populate("executive_id")
       .exec();
   },
   async getDirectorDesk(directorId: string) {
-    return await DirectorDeskModel.find({ director_id: directorId })
-      .populate("director_id")
+    return await DirectorDeskModel.find({ executive_id: directorId })
+      .populate("executive_id")
       .exec();
   },
   async updateDirectorDesk(

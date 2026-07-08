@@ -14,15 +14,17 @@ const UploadController = {
         typeof req.body.folder === "string" && req.body.folder.trim()
           ? req.body.folder.trim()
           : "general";
+      const safeFolder = /^[a-zA-Z0-9/_-]{1,50}$/.test(folder)
+        ? folder
+        : "general";
 
-      const uploaded = await UploadService.uploadFile(req.file, folder);
+      const uploaded = await UploadService.uploadFile(req.file, safeFolder);
 
       return res.status(201).json({
         message: "File uploaded successfully",
         data: uploaded,
       });
     } catch (error) {
-      console.log(error);
       next(error);
     }
   },

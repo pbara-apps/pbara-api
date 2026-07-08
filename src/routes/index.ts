@@ -32,10 +32,12 @@ router.use("/message", messageRoutes);
 router.use("/settings", settingsRoutes);
 
 router.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const safeMessage =
+    err?.status && err.status < 500
+      ? err.message
+      : "Something went wrong, if the problem persists, please contact the administrator";
   return res.status(err.status || 500).json({
-    message:
-      err.message ||
-      "Something went wrong, if the problem persists, please contact the administrator",
+    message: safeMessage,
     status: false,
   });
 });

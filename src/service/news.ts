@@ -1,5 +1,6 @@
 import NewsDao from "@/dao/news";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
+import { sanitizePlainText, sanitizeRichText } from "@/helpers/content-sanitizer";
 
 function slugify(text: string) {
   return text
@@ -37,8 +38,16 @@ type NewsInput = {
 
 const NewsService = {
   async create(data: NewsInput, actor?: AuditActor) {
-    const slug = data.slug?.trim() || (await uniqueSlug(data.title));
-    const news = await NewsDao.create({ ...data, slug });
+    const payload: NewsInput = {
+      ...data,
+      title: sanitizePlainText(data.title),
+      category: sanitizePlainText(data.category),
+      excerpt: sanitizePlainText(data.excerpt),
+      content: sanitizeRichText(data.content),
+      author: sanitizePlainText(data.author ?? ""),
+    };
+    const slug = payload.slug?.trim() || (await uniqueSlug(payload.title));
+    const news = await NewsDao.create({ ...payload, slug });
     await logAudit({
       action: "created",
       entityType: "news",
@@ -85,7 +94,12 @@ const NewsService = {
       err.status = 404;
       throw err;
     }
-    const payload = { ...data };
+    const payload = { ...data } as Partial<NewsInput>;
+    if (payload.title != null) payload.title = sanitizePlainText(payload.title);
+    if (payload.category != null) payload.category = sanitizePlainText(payload.category);
+    if (payload.excerpt != null) payload.excerpt = sanitizePlainText(payload.excerpt);
+    if (payload.content != null) payload.content = sanitizeRichText(payload.content);
+    if (payload.author != null) payload.author = sanitizePlainText(payload.author);
     if (payload.title && !payload.slug) {
       payload.slug = await uniqueSlug(payload.title, id);
     }

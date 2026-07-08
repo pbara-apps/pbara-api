@@ -1,5 +1,6 @@
 import SettingsController from "@/controller/settings";
 import requireAuth from "@/middleware/requireAuth";
+import requireRole from "@/middleware/requireRole";
 import requireSuperAdmin from "@/middleware/requireSuperAdmin";
 import validate from "@/middleware/validate";
 import { updateExecutiveRoleSchema } from "@/schema/settings";
@@ -9,7 +10,7 @@ const router = express.Router();
 
 router.get("/executives", [
   requireAuth,
-  requireSuperAdmin,
+  requireRole(["super_admin", "admin", "editor"]),
   SettingsController.getExecutivesWithRoles,
 ]);
 router.patch("/executives/:id/role", [

@@ -17,6 +17,12 @@ type ActivityItem = {
   timestamp: string;
 };
 
+type DirectorDeskUpdatePayload = {
+  title?: string;
+  description?: string;
+  image?: string | null;
+};
+
 const AdminService = {
   async getDashboard() {
     const [
@@ -84,10 +90,31 @@ const AdminService = {
       const directorDesk = await ExecutiveDao.getDirectorDesk(
         officeId?._id ?? "",
       );
-      return directorDesk;
+      if (!directorDesk) return null;
+      return {
+        _id: directorDesk._id,
+        name: directorDesk.name,
+        title: directorDesk.title,
+        description: directorDesk.description,
+        image: directorDesk.image ?? null,
+      };
     } catch (error) {
       throw error;
     }
+  },
+  async updateDirectorDesk(payload: DirectorDeskUpdatePayload) {
+    const officeId = (await OfficeDao.findByName("Director")) as OfficeTypes;
+    const directorDesk = await ExecutiveDao.getDirectorDesk(officeId?._id ?? "");
+
+    if (!directorDesk?._id) {
+      const err = new Error("Active director profile not found") as Error & {
+        status?: number;
+      };
+      err.status = 404;
+      throw err;
+    }
+
+    return await ExecutiveDao.updateExecutive(String(directorDesk._id), payload);
   },
 };
 

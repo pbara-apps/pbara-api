@@ -3,6 +3,7 @@ import AuditLogDao from "@/dao/audit-log";
 import ChurchDao from "@/dao/church";
 import EventDao from "@/dao/event";
 import ExecutiveDao from "@/dao/executive";
+import HeroStatsDao from "@/dao/hero-stats";
 import GalleryDao from "@/dao/gallery";
 import NewsDao from "@/dao/news";
 import OfficeDao from "@/dao/offices";
@@ -22,6 +23,18 @@ type DirectorDeskUpdatePayload = {
   description?: string;
   image?: string | null;
 };
+
+type HeroStatItem = {
+  label: string;
+  end: number;
+  suffix?: string;
+};
+
+const DEFAULT_HERO_STATS: Required<HeroStatItem>[] = [
+  { end: 21, label: "Active Chapters", suffix: "+" },
+  { end: 500, label: "Total Ambassadors", suffix: "+" },
+  { end: 14, label: "Years of Impact", suffix: "+" },
+];
 
 const AdminService = {
   async getDashboard() {
@@ -114,7 +127,44 @@ const AdminService = {
       throw err;
     }
 
-    return await ExecutiveDao.updateExecutive(String(directorDesk._id), payload);
+    const updatePayload = {
+      ...(payload.title !== undefined ? { title: payload.title } : {}),
+      ...(payload.description !== undefined
+        ? { description: payload.description }
+        : {}),
+      ...(payload.image !== undefined
+        ? { image: payload.image ?? "" }
+        : {}),
+    };
+
+    return await ExecutiveDao.updateExecutive(
+      String(directorDesk._id),
+      updatePayload,
+    );
+  },
+  async getHeroStats() {
+    const settings = await HeroStatsDao.getSingleton();
+    const stats = settings?.stats ?? DEFAULT_HERO_STATS;
+    return stats.map((item) => ({
+      label: String(item.label ?? "").trim(),
+      end: Number(item.end ?? 0),
+      suffix: String(item.suffix ?? "+").trim() || "+",
+    }));
+  },
+  async updateHeroStats(payload: { stats: HeroStatItem[] }) {
+    const normalized = payload.stats.map((item) => ({
+      label: item.label.trim(),
+      end: Number(item.end),
+      suffix: item.suffix?.trim() || "+",
+    }));
+    const updated = await HeroStatsDao.upsertStats(normalized);
+    return (
+      updated?.stats?.map((item) => ({
+        label: String(item.label ?? "").trim(),
+        end: Number(item.end ?? 0),
+        suffix: String(item.suffix ?? "+").trim() || "+",
+      })) ?? DEFAULT_HERO_STATS
+    );
   },
 };
 

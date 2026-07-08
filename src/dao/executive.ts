@@ -15,7 +15,10 @@ const ExecutiveDao = {
     return await ExecutiveModel.findOne({ email }).exec();
   },
   async findByEmailForAuth(email: string) {
-    return await ExecutiveModel.findOne({ email }).select("+password").exec();
+    return await ExecutiveModel.findOne({ email })
+      .select("+password")
+      .populate(["church", "office"])
+      .exec();
   },
   async findById(id: string) {
     return await ExecutiveModel.findById(id)

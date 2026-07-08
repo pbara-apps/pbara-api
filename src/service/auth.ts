@@ -25,6 +25,17 @@ const AuthService = {
     const { password: _pw, ...safeUser } = user.toObject();
     return { user: safeUser, token };
   },
+
+  async getProfile(executiveId: string) {
+    const user = await ExecutiveDao.findById(executiveId);
+    if (!user) {
+      const error = new Error("Profile not found") as Error & { status?: number };
+      error.status = 404;
+      throw error;
+    }
+    const { password: _pw, ...safeUser } = user.toObject();
+    return safeUser;
+  },
 };
 
 export default AuthService;

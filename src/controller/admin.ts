@@ -34,6 +34,28 @@ const AdminController = {
       next(error);
     }
   },
+  async getHeroStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const stats = await AdminService.getHeroStats();
+      return res.status(200).json({
+        message: "Hero stats fetched successfully",
+        data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async updateHeroStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const stats = await AdminService.updateHeroStats(req.body);
+      return res.status(200).json({
+        message: "Hero stats updated successfully",
+        data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default AdminController;

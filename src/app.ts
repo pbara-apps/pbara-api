@@ -16,7 +16,10 @@ const authLimiter = rateLimit({
   max: 15,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: "Too many login attempts, please try again later", status: false },
+  message: {
+    message: "Too many login attempts, please try again later",
+    status: false,
+  },
 });
 
 const messageLimiter = rateLimit({
@@ -24,7 +27,10 @@ const messageLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: "Too many requests, please try again later", status: false },
+  message: {
+    message: "Too many requests, please try again later",
+    status: false,
+  },
 });
 
 app.use(express.json());
@@ -41,10 +47,10 @@ app.use(
     },
   }),
 );
-app.use("/api/auth/login", authLimiter);
-app.use("/api/message/public/create", messageLimiter);
+app.use("/auth/login", authLimiter);
+app.use("/message/public/create", messageLimiter);
 
-app.get("/api/health", (_req, res) => {
+app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
@@ -57,18 +63,25 @@ app.use(async (_req, _res, next) => {
   }
 });
 
-app.use("/api", router);
+app.use("/", router);
 
-app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
-  console.error("[API Error]", err);
-  const safeMessage =
-    err.status && err.status < 500
-      ? err.message
-      : "Something went wrong, if the problem persists, please contact the administrator";
-  return res.status(err.status || 500).json({
-    message: safeMessage,
-    status: false,
-  });
-});
+app.use(
+  (
+    err: Error & { status?: number },
+    _req: Request,
+    res: Response,
+    _next: NextFunction,
+  ) => {
+    console.error("[API Error]", err);
+    const safeMessage =
+      err.status && err.status < 500
+        ? err.message
+        : "Something went wrong, if the problem persists, please contact the administrator";
+    return res.status(err.status || 500).json({
+      message: safeMessage,
+      status: false,
+    });
+  },
+);
 
 export default app;

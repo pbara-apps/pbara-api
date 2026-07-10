@@ -11,6 +11,8 @@ const allowedOrigins = (process.env.CORS_ORIGINS ?? "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+console.log(allowedOrigins);
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 15,

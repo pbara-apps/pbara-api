@@ -9,6 +9,7 @@ import executiveRoutes from "./executive";
 import galleryRoutes from "./gallery";
 import newsRoutes from "./news";
 import officeRoutes from "./office";
+import rankRoutes from "./rank";
 import authRoutes from "./auth";
 import adminRoutes from "./admin";
 
@@ -21,6 +22,7 @@ router.get("/", (req: Request, res: Response) => {
 router.use("/auth", authRoutes);
 router.use("/church", churchRoutes);
 router.use("/office", officeRoutes);
+router.use("/rank", rankRoutes);
 router.use("/executive", executiveRoutes);
 router.use("/news", newsRoutes);
 router.use("/event", eventRoutes);

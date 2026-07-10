@@ -5,6 +5,7 @@ export interface ExecutiveTypes {
   email: string;
   phone: string;
   church: string;
+  rank_id?: string | null;
   start_year: number;
   end_year?: number;
   status: "active" | "inactive" | "completed";
@@ -25,6 +26,13 @@ export interface OfficeTypes {
   _id: string;
   name?: string;
   description?: string;
+}
+
+export interface RankTypes {
+  name: string;
+  description: string;
+  category: string;
+  image?: string | null;
 }
 
 export interface DirectorDeskTypes {

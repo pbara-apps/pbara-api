@@ -1,15 +1,17 @@
 import ExecutiveModel from "@/models/executive";
 import { ExecutiveTypes } from "@/types/_types";
 
+const POPULATE_FIELDS = ["church", "office", "rank"] as const;
+
 const ExecutiveDao = {
   async createExecutive(officer: ExecutiveTypes) {
     const created = await ExecutiveModel.create(officer);
     return await ExecutiveModel.findById(created._id)
-      .populate(["church", "office"])
+      .populate([...POPULATE_FIELDS])
       .exec();
   },
   async findAll() {
-    return await ExecutiveModel.find().populate(["church", "office"]).exec();
+    return await ExecutiveModel.find().populate([...POPULATE_FIELDS]).exec();
   },
   async findByEmail(email: string) {
     return await ExecutiveModel.findOne({ email }).exec();
@@ -17,17 +19,17 @@ const ExecutiveDao = {
   async findByEmailForAuth(email: string) {
     return await ExecutiveModel.findOne({ email })
       .select("+password")
-      .populate(["church", "office"])
+      .populate([...POPULATE_FIELDS])
       .exec();
   },
   async findById(id: string) {
     return await ExecutiveModel.findById(id)
-      .populate(["church", "office"])
+      .populate([...POPULATE_FIELDS])
       .exec();
   },
   async updateExecutive(id: string, officer: Partial<ExecutiveTypes>) {
     return await ExecutiveModel.findByIdAndUpdate(id, officer, { new: true })
-      .populate(["church", "office"])
+      .populate([...POPULATE_FIELDS])
       .exec();
   },
   async deleteExecutive(id: string) {
@@ -38,7 +40,7 @@ const ExecutiveDao = {
   },
   async findPublic() {
     return await ExecutiveModel.find({ status: "active" })
-      .populate(["church", "office"])
+      .populate([...POPULATE_FIELDS])
       .sort({ start_year: -1 })
       .exec();
   },
@@ -52,7 +54,7 @@ const ExecutiveDao = {
     return await ExecutiveModel.find()
       .sort({ createdAt: -1 })
       .limit(limit)
-      .populate(["church", "office"])
+      .populate([...POPULATE_FIELDS])
       .exec();
   },
   async getDirectorDesk(officeId: string) {
@@ -60,7 +62,7 @@ const ExecutiveDao = {
       office_id: officeId,
       status: "active",
     })
-      .populate(["church", "office"])
+      .populate([...POPULATE_FIELDS])
       .exec();
   },
 };

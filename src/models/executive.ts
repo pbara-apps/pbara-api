@@ -28,6 +28,11 @@ const executiveSchema = new mongoose.Schema(
       ref: "Church",
       required: true,
     },
+    rank_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Rank",
+      default: null,
+    },
     start_year: {
       type: Number,
       required: true,
@@ -79,6 +84,13 @@ executiveSchema.virtual("church", {
 executiveSchema.virtual("office", {
   ref: "Office",
   localField: "office_id",
+  foreignField: "_id",
+  justOne: true,
+});
+
+executiveSchema.virtual("rank", {
+  ref: "Rank",
+  localField: "rank_id",
   foreignField: "_id",
   justOne: true,
 });

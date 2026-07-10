@@ -35,6 +35,25 @@ const AuthController = {
       next(error);
     }
   },
+
+  async updateProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const authUser = getAuthUser(req);
+      if (!authUser?.id) {
+        return res.status(401).json({ message: "Unauthorized", status: false });
+      }
+
+      const user = await AuthService.updateProfile(authUser.id, req.body);
+
+      return res.status(200).json({
+        message: "Profile updated successfully",
+        status: true,
+        data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default AuthController;

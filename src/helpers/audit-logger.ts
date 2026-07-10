@@ -7,7 +7,8 @@ export type AuditEntityType =
   | "gallery"
   | "executive"
   | "chapter"
-  | "office";
+  | "office"
+  | "patron";
 
 export type AuditActor = {
   id?: string;

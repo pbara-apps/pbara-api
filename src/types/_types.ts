@@ -22,6 +22,16 @@ export interface ChurchTypes {
   image?: string;
 }
 
+export interface PatronTypes {
+  name: string;
+  role: string;
+  quote: string;
+  description?: string | null;
+  image?: string | null;
+  status: "active" | "inactive";
+  sort_order?: number;
+}
+
 export interface OfficeTypes {
   _id: string;
   name?: string;

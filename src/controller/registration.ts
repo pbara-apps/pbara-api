@@ -56,6 +56,18 @@ const RegistrationController = {
     }
   },
 
+  async getPendingCount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const count = await RegistrationService.getPendingCount();
+      return res.status(200).json({
+        message: "Pending registration count fetched successfully",
+        data: { count },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const registration = await RegistrationService.updateStatus(

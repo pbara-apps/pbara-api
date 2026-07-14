@@ -32,6 +32,11 @@ router.patch("/status/:id", [
   RegistrationController.updateStatus,
 ]);
 
+router.get("/pending-count", [
+  requireAuth,
+  RegistrationController.getPendingCount,
+]);
+
 router.get("/:id", [
   requireAuth,
   validate(idParamSchema),

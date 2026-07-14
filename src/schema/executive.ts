@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const executivebodySchema = z.object({
-  image: z.string().optional(),
+  image: z.string().or(z.null()).optional(),
   name: z.string().min(3),
   office_id: z.string().min(1),
   email: z.string().optional(),

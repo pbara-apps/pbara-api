@@ -72,6 +72,10 @@ const RegistrationService = {
     return registration;
   },
 
+  async getPendingCount() {
+    return await RegistrationDao.countPending();
+  },
+
   async list(filters: {
     programId?: string;
     category?: string;

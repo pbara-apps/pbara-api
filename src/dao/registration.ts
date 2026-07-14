@@ -64,6 +64,9 @@ const RegistrationDao = {
       .populate("entries.church", "name chapter")
       .exec();
   },
+  async countPending() {
+    return await RegistrationModel.countDocuments({ status: "pending" }).exec();
+  },
 };
 
 export default RegistrationDao;

@@ -12,6 +12,8 @@ import express from "express";
 
 const router = express.Router();
 
+router.get("/public", RankController.getPublicRanks);
+
 router.post("/create", [
   requireAuth,
   requireRole(["super_admin", "admin", "editor"]),

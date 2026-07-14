@@ -55,3 +55,40 @@ export interface LoginTypes {
   email: string;
   password: string;
 }
+
+export interface BankDetailsTypes {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+}
+
+export interface RegistrationProgramTypes {
+  title: string;
+  slug?: string;
+  category: string;
+  description?: string | null;
+  flyerImageUrl?: string | null;
+  amount: number;
+  bankDetails: BankDetailsTypes;
+  registrationMode: "single" | "bulk" | "both";
+  registrationDeadline?: string | Date | null;
+  isActive?: boolean;
+  termsAndConditions?: string | null;
+}
+
+export interface RegistrationEntryTypes {
+  name: string;
+  rank: string;
+  church: string;
+}
+
+export interface RegistrationTypes {
+  programId: string;
+  registrantName: string;
+  registrantPhone: string;
+  proofOfPaymentUrl: string;
+  registrationType: "single" | "bulk";
+  entries: RegistrationEntryTypes[];
+  status?: "pending" | "verified" | "rejected";
+  adminNote?: string | null;
+}

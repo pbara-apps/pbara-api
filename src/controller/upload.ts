@@ -28,6 +28,29 @@ const UploadController = {
       next(error);
     }
   },
+
+  async uploadRegistrationProof(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No file uploaded. Send the file under the 'file' field.",
+          status: false,
+        });
+      }
+
+      const uploaded = await UploadService.uploadFile(
+        req.file,
+        "registration-proofs",
+      );
+
+      return res.status(201).json({
+        message: "Proof of payment uploaded successfully",
+        data: uploaded,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default UploadController;

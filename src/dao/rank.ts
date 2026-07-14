@@ -11,6 +11,12 @@ const RankDao = {
   async findAll() {
     return await RankModel.find().sort({ name: 1 }).exec();
   },
+  async findPublic() {
+    return await RankModel.find()
+      .select("name description category image")
+      .sort({ name: 1 })
+      .exec();
+  },
   async findById(id: string) {
     return await RankModel.findById(id).exec();
   },

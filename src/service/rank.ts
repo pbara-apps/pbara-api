@@ -11,6 +11,9 @@ const RankService = {
   async getAllRanks() {
     return await RankDao.findAll();
   },
+  async getPublicRanks() {
+    return await RankDao.findPublic();
+  },
   async getRankById(id: string) {
     return await RankDao.findById(id);
   },

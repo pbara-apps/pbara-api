@@ -46,6 +46,17 @@ const RankController = {
       next(error);
     }
   },
+  async getPublicRanks(req: Request, res: Response, next: NextFunction) {
+    try {
+      const ranks = await RankService.getPublicRanks();
+      return res.status(200).json({
+        message: "Public ranks fetched successfully",
+        data: ranks,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
   async getRankById(req: Request, res: Response, next: NextFunction) {
     try {
       const rank = await RankService.getRankById(req.params.id as string);

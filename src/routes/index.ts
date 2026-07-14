@@ -10,7 +10,9 @@ import galleryRoutes from "./gallery";
 import newsRoutes from "./news";
 import officeRoutes from "./office";
 import patronRoutes from "./patron";
+import programRoutes from "./program";
 import rankRoutes from "./rank";
+import registrationRoutes from "./registration";
 import authRoutes from "./auth";
 import adminRoutes from "./admin";
 
@@ -29,6 +31,8 @@ router.use("/patron", patronRoutes);
 router.use("/news", newsRoutes);
 router.use("/event", eventRoutes);
 router.use("/gallery", galleryRoutes);
+router.use("/program", programRoutes);
+router.use("/registration", registrationRoutes);
 router.use("/admin", adminRoutes);
 router.use("/audit", auditRoutes);
 router.use("/upload", uploadRoutes);

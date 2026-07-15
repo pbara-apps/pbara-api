@@ -13,6 +13,11 @@ const registrationEntrySchema = new mongoose.Schema(
       ref: "Church",
       required: true,
     },
+    registrationCode: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
   { _id: false },
 );
@@ -53,6 +58,10 @@ const registrationSchema = new mongoose.Schema(
 
 registrationSchema.index({ programId: 1, status: 1 });
 registrationSchema.index({ createdAt: -1 });
+registrationSchema.index(
+  { "entries.registrationCode": 1 },
+  { unique: true, sparse: true },
+);
 
 const RegistrationModel = mongoose.model("Registration", registrationSchema);
 

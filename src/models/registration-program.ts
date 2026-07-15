@@ -13,6 +13,13 @@ const registrationProgramSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
+    /** Short code for registration numbers, e.g. RCAMP26. Optional — derived from slug when absent. */
+    programCode: {
+      type: String,
+      default: null,
+      uppercase: true,
+      trim: true,
+    },
     category: { type: String, required: true },
     description: { type: String, default: null },
     flyerImageUrl: { type: String, default: null },

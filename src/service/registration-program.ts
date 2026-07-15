@@ -1,5 +1,6 @@
 import RegistrationProgramDao from "@/dao/registration-program";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
+import { normalizeProgramCode } from "@/helpers/registration-code";
 import { RegistrationProgramTypes } from "@/types/_types";
 
 function slugify(text: string) {
@@ -45,6 +46,7 @@ const RegistrationProgramService = {
     const program = await RegistrationProgramDao.create({
       ...data,
       slug,
+      programCode: normalizeProgramCode(data.programCode),
       registrationDeadline: toDeadlineDate(data.registrationDeadline),
       isActive: data.isActive ?? true,
     });
@@ -101,6 +103,10 @@ const RegistrationProgramService = {
 
     if (data.registrationDeadline !== undefined) {
       payload.registrationDeadline = toDeadlineDate(data.registrationDeadline);
+    }
+
+    if (data.programCode !== undefined) {
+      payload.programCode = normalizeProgramCode(data.programCode);
     }
 
     const updated = await RegistrationProgramDao.update(id, payload);

@@ -17,7 +17,8 @@ export type RegistrationListFilters = {
 
 const RegistrationDao = {
   async create(data: RegistrationPayload) {
-    return await RegistrationModel.create(data);
+    const created = await RegistrationModel.create(data);
+    return await RegistrationDao.findById(String(created._id));
   },
   async findById(id: string) {
     return await RegistrationModel.findById(id)

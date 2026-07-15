@@ -1,8 +1,13 @@
 import ChurchDao from "@/dao/church";
 import RankDao from "@/dao/rank";
+import RegistrationCounterDao from "@/dao/registration-counter";
 import RegistrationDao from "@/dao/registration";
 import RegistrationProgramDao from "@/dao/registration-program";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
+import {
+  buildRegistrationCodes,
+  resolveProgramCode,
+} from "@/helpers/registration-code";
 import { RegistrationTypes } from "@/types/_types";
 
 function httpError(message: string, status: number) {
@@ -58,8 +63,30 @@ const RegistrationService = {
       }
     }
 
+    const programCode = resolveProgramCode({
+      programCode: program.programCode,
+      slug: program.slug,
+    });
+    const year = new Date().getFullYear();
+    const { start } = await RegistrationCounterDao.nextSerial(
+      data.programId,
+      data.entries.length,
+    );
+    const codes = buildRegistrationCodes({
+      programCode,
+      year,
+      startSerial: start,
+      count: data.entries.length,
+    });
+
+    const entries = data.entries.map((entry, index) => ({
+      ...entry,
+      registrationCode: codes[index]!,
+    }));
+
     return await RegistrationDao.create({
       ...data,
+      entries,
       status: "pending",
     });
   },

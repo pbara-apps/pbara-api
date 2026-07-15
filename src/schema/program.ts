@@ -12,12 +12,22 @@ const bankDetailsSchema = z.object({
   accountNumber: z.string().min(5),
 });
 
+const programCodePattern = /^[A-Za-z0-9]{2,12}$/;
+
 const programBodyBase = z.object({
   title: z.string().min(3),
   slug: z
     .string()
     .regex(slugPattern, "Slug must be URL-safe (lowercase letters, numbers, hyphens)")
     .optional(),
+  programCode: z
+    .string()
+    .regex(
+      programCodePattern,
+      "Program code must be 2–12 letters or numbers",
+    )
+    .optional()
+    .nullable(),
   category: z.string().min(2),
   description: z.string().optional().nullable(),
   flyerImageUrl: z.string().optional().nullable(),

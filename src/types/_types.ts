@@ -65,6 +65,7 @@ export interface BankDetailsTypes {
 export interface RegistrationProgramTypes {
   title: string;
   slug?: string;
+  programCode?: string | null;
   category: string;
   description?: string | null;
   flyerImageUrl?: string | null;
@@ -80,6 +81,7 @@ export interface RegistrationEntryTypes {
   name: string;
   rank: string;
   church: string;
+  registrationCode?: string;
 }
 
 export interface RegistrationTypes {

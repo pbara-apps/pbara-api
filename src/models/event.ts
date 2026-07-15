@@ -15,6 +15,12 @@ const eventSchema = new mongoose.Schema(
       enum: ["open", "completed", "cancelled"],
       default: "open",
     },
+    /** When set, public "Register Now" links to this program's registration page. */
+    registrationProgramId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RegistrationProgram",
+      default: null,
+    },
   },
   { timestamps: true },
 );

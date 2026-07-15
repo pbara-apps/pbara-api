@@ -14,6 +14,11 @@ const eventBodyBase = z.object({
   description: z.string().min(10),
   image: z.string().optional().nullable(),
   status: z.enum(["open", "completed", "cancelled"]).optional(),
+  registrationProgramId: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, "Invalid program id")
+    .optional()
+    .nullable(),
 });
 
 // Infer the type directly from the schema instead of writing it by hand

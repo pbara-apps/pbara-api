@@ -10,6 +10,7 @@ type EventInput = {
   description: string;
   image?: string | null;
   status?: "open" | "completed" | "cancelled";
+  registrationProgramId?: string | null;
 };
 
 const EventService = {

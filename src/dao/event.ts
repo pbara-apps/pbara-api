@@ -9,23 +9,38 @@ type EventPayload = {
   description?: string;
   image?: string | null;
   status?: "open" | "completed" | "cancelled";
+  registrationProgramId?: string | null;
 };
+
+const PROGRAM_POPULATE = {
+  path: "registrationProgramId",
+  select: "title slug isActive",
+} as const;
 
 const EventDao = {
   async create(data: EventPayload) {
-    return await EventModel.create(data);
+    const created = await EventModel.create(data);
+    return await EventModel.findById(created._id).populate(PROGRAM_POPULATE).exec();
   },
   async findAll() {
-    return await EventModel.find().sort({ createdAt: -1 }).exec();
+    return await EventModel.find()
+      .populate(PROGRAM_POPULATE)
+      .sort({ createdAt: -1 })
+      .exec();
   },
   async findPublic() {
-    return await EventModel.find({ status: "open" }).sort({ createdAt: -1 }).exec();
+    return await EventModel.find({ status: "open" })
+      .populate(PROGRAM_POPULATE)
+      .sort({ createdAt: -1 })
+      .exec();
   },
   async findById(id: string) {
-    return await EventModel.findById(id).exec();
+    return await EventModel.findById(id).populate(PROGRAM_POPULATE).exec();
   },
   async update(id: string, data: EventPayload) {
-    return await EventModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    return await EventModel.findByIdAndUpdate(id, data, { new: true })
+      .populate(PROGRAM_POPULATE)
+      .exec();
   },
   async delete(id: string) {
     return await EventModel.findByIdAndDelete(id).exec();

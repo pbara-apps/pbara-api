@@ -27,7 +27,9 @@ const ExecutiveService = {
   async deleteExecutive(id: string) {
     const existing = await ExecutiveDao.findById(id);
     if (!existing) {
-      const err = new Error("Executive not found") as Error & { status?: number };
+      const err = new Error("Executive not found") as Error & {
+        status?: number;
+      };
       err.status = 404;
       throw err;
     }

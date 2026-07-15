@@ -64,7 +64,7 @@ const executiveSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["super_admin", "admin", "editor", "viewer"],
-      default: "admin",
+      default: "viewer",
     },
   },
   {

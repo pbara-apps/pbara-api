@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 
-const saltRound = Number(process.env.SALT_ROUND) || 10;
+/** bcrypt cost is 2^rounds — keep this in a practical range (10–12 is typical). */
+const parsed = Number(process.env.SALT_ROUND);
+const saltRound =
+  Number.isFinite(parsed) && parsed >= 4 && parsed <= 15 ? parsed : 10;
+
 export const hashPassword = async (password: string) => {
   const bcryptSalt = await bcrypt.genSalt(saltRound);
   return await bcrypt.hash(password, bcryptSalt);

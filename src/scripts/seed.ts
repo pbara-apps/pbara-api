@@ -5,11 +5,7 @@ import ChurchModel from "@/models/church";
 import ExecutiveModel from "@/models/executive";
 import OfficeModel from "@/models/offices";
 import mongoose from "mongoose";
-import {
-  DEFAULT_ADMIN,
-  SEED_CHAPTERS,
-  SEED_OFFICES,
-} from "./seed-data";
+import { DEFAULT_ADMIN, SEED_CHAPTERS, SEED_OFFICES } from "./seed-data";
 
 async function seedOffices() {
   const existing = await OfficeModel.find(
@@ -49,10 +45,14 @@ async function seedAdminUser() {
   }
 
   const directorOffice = await OfficeModel.findOne({ name: "Director" }).exec();
-  const defaultChapter = await ChurchModel.findOne().sort({ chapter: 1 }).exec();
+  const defaultChapter = await ChurchModel.findOne()
+    .sort({ chapter: 1 })
+    .exec();
 
   if (!directorOffice || !defaultChapter) {
-    throw new Error("Seed offices and chapters before creating the admin user.");
+    throw new Error(
+      "Seed offices and chapters before creating the admin user.",
+    );
   }
 
   const hashedPassword = await hashPassword(password);
@@ -83,19 +83,9 @@ async function main() {
   const chaptersCreated = await seedChapters();
   const admin = await seedAdminUser();
 
-  console.log("\nPBA RA database seed complete");
-  console.log(`  Offices created:  ${officesCreated}`);
-  console.log(`  Chapters created: ${chaptersCreated}`);
-  console.log(
-    `  Admin user:       ${admin.created ? "created" : "already exists"} (${admin.email})`,
-  );
-
   if (admin.created) {
     const password = process.env.SEED_ADMIN_PASSWORD ?? DEFAULT_ADMIN.password;
-    console.log(`  Login password:   ${password}`);
-    console.log("  Change this password after first login.\n");
   } else {
-    console.log("");
   }
 }
 

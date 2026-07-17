@@ -83,6 +83,38 @@ const RegistrationController = {
       next(error);
     }
   },
+
+  async addEntries(req: Request, res: Response, next: NextFunction) {
+    try {
+      const registration = await RegistrationService.addEntries(
+        req.params.id as string,
+        req.body,
+        getActor(req),
+      );
+      return res.status(200).json({
+        message: "Participants added successfully",
+        data: registration,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateEntry(req: Request, res: Response, next: NextFunction) {
+    try {
+      const registration = await RegistrationService.updateEntry(
+        req.params.id as string,
+        req.body,
+        getActor(req),
+      );
+      return res.status(200).json({
+        message: "Participant updated successfully",
+        data: registration,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default RegistrationController;

@@ -49,9 +49,44 @@ export const updateRegistrationStatusSchema = z.object({
   }),
 });
 
+export const addRegistrationEntriesSchema = z.object({
+  params: z.object({
+    id: z.string().regex(objectId, "Invalid id format"),
+  }),
+  body: z.object({
+    entries: z.array(entrySchema).min(1),
+  }),
+});
+
+export const updateRegistrationEntrySchema = z.object({
+  params: z.object({
+    id: z.string().regex(objectId, "Invalid id format"),
+  }),
+  body: z
+    .object({
+      registrationCode: z.string().min(3),
+      name: z.string().min(2).optional(),
+      rank: z.string().regex(objectId, "Invalid rank id").optional(),
+      church: z.string().regex(objectId, "Invalid church id").optional(),
+    })
+    .refine(
+      (data) =>
+        data.name !== undefined ||
+        data.rank !== undefined ||
+        data.church !== undefined,
+      { message: "Provide at least one field to update (name, rank, or church)" },
+    ),
+});
+
 export type CreateRegistrationInput = z.infer<
   typeof createRegistrationSchema
 >["body"];
 export type UpdateRegistrationStatusInput = z.infer<
   typeof updateRegistrationStatusSchema
+>["body"];
+export type AddRegistrationEntriesInput = z.infer<
+  typeof addRegistrationEntriesSchema
+>["body"];
+export type UpdateRegistrationEntryInput = z.infer<
+  typeof updateRegistrationEntrySchema
 >["body"];

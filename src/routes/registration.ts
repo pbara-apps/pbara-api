@@ -6,8 +6,10 @@ import { uploadImage } from "@/middleware/upload";
 import validate from "@/middleware/validate";
 import { idParamSchema } from "@/schema/common";
 import {
+  addRegistrationEntriesSchema,
   createRegistrationSchema,
   listRegistrationsQuerySchema,
+  updateRegistrationEntrySchema,
   updateRegistrationStatusSchema,
 } from "@/schema/registration";
 import express from "express";
@@ -30,6 +32,20 @@ router.patch("/status/:id", [
   requireRole(["super_admin", "admin", "editor"]),
   validate(updateRegistrationStatusSchema),
   RegistrationController.updateStatus,
+]);
+
+router.post("/:id/entries", [
+  requireAuth,
+  requireRole(["super_admin", "admin", "editor"]),
+  validate(addRegistrationEntriesSchema),
+  RegistrationController.addEntries,
+]);
+
+router.patch("/:id/entry", [
+  requireAuth,
+  requireRole(["super_admin", "admin", "editor"]),
+  validate(updateRegistrationEntrySchema),
+  RegistrationController.updateEntry,
 ]);
 
 router.get("/pending-count", [

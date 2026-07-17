@@ -65,6 +65,45 @@ const RegistrationDao = {
       .populate("entries.church", "name chapter")
       .exec();
   },
+  async addEntries(
+    id: string,
+    data: {
+      entries: Array<{
+        name: string;
+        rank: string;
+        church: string;
+        registrationCode: string;
+      }>;
+      registrationType?: "single" | "bulk";
+    },
+  ) {
+    const update: Record<string, unknown> = {
+      $push: { entries: { $each: data.entries } },
+    };
+    if (data.registrationType) {
+      update.$set = { registrationType: data.registrationType };
+    }
+
+    await RegistrationModel.findByIdAndUpdate(id, update).exec();
+    return await RegistrationDao.findById(id);
+  },
+  async updateEntryByCode(
+    id: string,
+    code: string,
+    data: { name?: string; rank?: string; church?: string },
+  ) {
+    const setFields: Record<string, string> = {};
+    if (data.name !== undefined) setFields["entries.$.name"] = data.name;
+    if (data.rank !== undefined) setFields["entries.$.rank"] = data.rank;
+    if (data.church !== undefined) setFields["entries.$.church"] = data.church;
+
+    await RegistrationModel.findOneAndUpdate(
+      { _id: id, "entries.registrationCode": code },
+      { $set: setFields },
+    ).exec();
+
+    return await RegistrationDao.findById(id);
+  },
   async countPending() {
     return await RegistrationModel.countDocuments({ status: "pending" }).exec();
   },

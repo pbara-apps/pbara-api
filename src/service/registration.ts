@@ -169,6 +169,159 @@ const RegistrationService = {
 
     return updated;
   },
+
+  async addEntries(
+    id: string,
+    data: {
+      entries: Array<{ name: string; rank: string; church: string }>;
+    },
+    actor?: AuditActor,
+  ) {
+    const existing = await RegistrationDao.findById(id);
+    if (!existing) {
+      throw httpError("Registration not found", 404);
+    }
+    if (existing.status === "rejected") {
+      throw httpError("Cannot add entries to a rejected registration", 400);
+    }
+
+    const populatedProgram = existing.programId as unknown as
+      | { _id?: unknown; id?: string }
+      | string
+      | null
+      | undefined;
+
+    let programId = "";
+    if (typeof populatedProgram === "string") {
+      programId = populatedProgram;
+    } else if (populatedProgram && typeof populatedProgram === "object") {
+      programId = String(populatedProgram._id ?? populatedProgram.id ?? "");
+    }
+
+    if (!programId) {
+      throw httpError("Program not found on registration", 400);
+    }
+
+    const program = await RegistrationProgramDao.findById(programId);
+    if (!program) {
+      throw httpError("Program not found", 404);
+    }
+
+    for (const [index, entry] of data.entries.entries()) {
+      const rank = await RankDao.findById(entry.rank);
+      if (!rank) {
+        throw httpError(`Invalid rank for entry ${index + 1}`, 400);
+      }
+      const church = await ChurchDao.findById(entry.church);
+      if (!church) {
+        throw httpError(`Invalid church for entry ${index + 1}`, 400);
+      }
+      if (church.status !== "active") {
+        throw httpError(`Church for entry ${index + 1} is not active`, 400);
+      }
+    }
+
+    const programCode = resolveProgramCode({
+      programCode: program.programCode,
+      slug: program.slug,
+    });
+    const year = new Date().getFullYear();
+    const { start } = await RegistrationCounterDao.nextSerial(
+      programId,
+      data.entries.length,
+    );
+    const codes = buildRegistrationCodes({
+      programCode,
+      year,
+      startSerial: start,
+      count: data.entries.length,
+    });
+
+    const newEntries = data.entries.map((entry, index) => ({
+      name: entry.name,
+      rank: entry.rank,
+      church: entry.church,
+      registrationCode: codes[index]!,
+    }));
+
+    const nextCount = existing.entries.length + newEntries.length;
+    const updated = await RegistrationDao.addEntries(id, {
+      entries: newEntries,
+      registrationType: nextCount > 1 ? "bulk" : existing.registrationType,
+    });
+
+    await logAudit({
+      action: "updated",
+      entityType: "registration",
+      entityId: id,
+      entityTitle: existing.registrantName,
+      actor,
+      detail: `added ${newEntries.length} entr${newEntries.length === 1 ? "y" : "ies"}`,
+    });
+
+    return updated;
+  },
+
+  async updateEntry(
+    id: string,
+    data: {
+      registrationCode: string;
+      name?: string;
+      rank?: string;
+      church?: string;
+    },
+    actor?: AuditActor,
+  ) {
+    const existing = await RegistrationDao.findById(id);
+    if (!existing) {
+      throw httpError("Registration not found", 404);
+    }
+
+    const code = data.registrationCode.trim();
+    const entryExists = existing.entries.some(
+      (entry: { registrationCode?: string }) =>
+        entry.registrationCode === code,
+    );
+    if (!entryExists) {
+      throw httpError("Registration entry not found", 404);
+    }
+
+    if (data.rank) {
+      const rank = await RankDao.findById(data.rank);
+      if (!rank) {
+        throw httpError("Invalid rank", 400);
+      }
+    }
+    if (data.church) {
+      const church = await ChurchDao.findById(data.church);
+      if (!church) {
+        throw httpError("Invalid church", 400);
+      }
+      if (church.status !== "active") {
+        throw httpError("Church is not active", 400);
+      }
+    }
+
+    const updated = await RegistrationDao.updateEntryByCode(id, code, {
+      name: data.name,
+      rank: data.rank,
+      church: data.church,
+    });
+    if (!updated) {
+      throw httpError("Failed to update entry", 500);
+    }
+
+    await logAudit({
+      action: "updated",
+      entityType: "registration",
+      entityId: id,
+      entityTitle: existing.registrantName,
+      actor,
+      detail: `updated entry ${code}`,
+    });
+
+    return updated;
+  },
 };
 
 export default RegistrationService;

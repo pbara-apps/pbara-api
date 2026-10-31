@@ -15,11 +15,12 @@ import rankRoutes from "./rank";
 import registrationRoutes from "./registration";
 import authRoutes from "./auth";
 import adminRoutes from "./admin";
+import subscriberRoutes from "./subscriber";
 
 const router = express.Router();
 
 router.get("/", (req: Request, res: Response) => {
-  res.status(200).json({ message: "Hello World" });
+  res.status(200).json({ message: "API is healthy" });
 });
 
 router.use("/auth", authRoutes);
@@ -38,6 +39,7 @@ router.use("/audit", auditRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/message", messageRoutes);
 router.use("/settings", settingsRoutes);
+router.use("/subscriber", subscriberRoutes);
 
 router.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const safeMessage =

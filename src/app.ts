@@ -49,6 +49,7 @@ app.use(
 );
 app.use("/auth/login", authLimiter);
 app.use("/message/public/create", messageLimiter);
+app.use("/subscriber/public/subscribe", messageLimiter);
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true });

@@ -4,6 +4,7 @@ import requireRole from "@/middleware/requireRole";
 import requireSuperAdmin from "@/middleware/requireSuperAdmin";
 import validate from "@/middleware/validate";
 import {
+  adminAchievementListSchema,
   adminChapterListSchema,
   approveMembersSchema,
   chapterRequestIdSchema,
@@ -71,6 +72,13 @@ router.post("/chapter-requests/:id/reject", [
   requireSuperAdmin,
   validate(rejectChapterRequestSchema),
   ChapterAdminController.rejectChapterRequest,
+]);
+
+router.get("/achievements", [
+  requireAuth,
+  canViewBoard,
+  validate(adminAchievementListSchema),
+  ChapterAdminController.listAchievements,
 ]);
 
 router.get("/recruitment", [

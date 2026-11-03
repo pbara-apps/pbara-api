@@ -1,6 +1,7 @@
 import { asyncHandler } from "@/helpers/async-handler";
 import { getPortalUser } from "@/helpers/portal-auth-user";
 import { httpError } from "@/helpers/http-error";
+import AchievementService from "@/service/achievement";
 import ChapterService from "@/service/chapter";
 import ChapterRequestService from "@/service/chapter-request";
 import MemberService, { type MemberView } from "@/service/member";
@@ -58,6 +59,24 @@ const ChapterPortalController = {
       req.query.chapterId as string | undefined,
     );
     res.status(200).json({ message: "Registrations fetched successfully", data });
+  }),
+
+  // Achievements
+  listAchievements: asyncHandler(async (req, res) => {
+    const data = await AchievementService.list(getPortalUser(req), req.query.chapterId as string | undefined);
+    res.status(200).json({ message: "Achievements fetched successfully", data });
+  }),
+  createAchievement: asyncHandler(async (req, res) => {
+    const data = await AchievementService.create(getPortalUser(req), req.body);
+    res.status(201).json({ message: "Achievement added", data });
+  }),
+  updateAchievement: asyncHandler(async (req, res) => {
+    const data = await AchievementService.update(getPortalUser(req), req.params.id as string, req.body);
+    res.status(200).json({ message: "Achievement updated", data });
+  }),
+  deleteAchievement: asyncHandler(async (req, res) => {
+    await AchievementService.remove(getPortalUser(req), req.params.id as string);
+    res.status(200).json({ message: "Achievement removed", data: null });
   }),
 
   // Dashboard

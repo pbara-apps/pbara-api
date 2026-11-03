@@ -9,7 +9,11 @@ import {
 import { uploadDocument } from "@/middleware/upload";
 import validate from "@/middleware/validate";
 import {
+  achievementIdSchema,
   addMembersSchema,
+  createAchievementSchema,
+  listAchievementsSchema,
+  updateAchievementSchema,
   assignOfficerSchema,
   chapterRequestIdSchema,
   createChapterRequestSchema,
@@ -80,6 +84,11 @@ portal.get("/programs", ChapterPortalController.listPrograms);
 portal.get("/programs/:id/registered", [validate(registeredMembersSchema), ChapterPortalController.registeredMembers]);
 portal.get("/registrations", [validate(portalRegistrationListSchema), ChapterPortalController.listRegistrations]);
 portal.post("/registrations", [validate(portalRegistrationSchema), ChapterPortalController.register]);
+
+portal.get("/achievements", [validate(listAchievementsSchema), ChapterPortalController.listAchievements]);
+portal.post("/achievements", [validate(createAchievementSchema), ChapterPortalController.createAchievement]);
+portal.patch("/achievements/:id", [validate(updateAchievementSchema), ChapterPortalController.updateAchievement]);
+portal.delete("/achievements/:id", [validate(achievementIdSchema), ChapterPortalController.deleteAchievement]);
 
 // 4. Counsellor only: chapter presidents and secretaries.
 const counsellorOnly = requirePortalRole(["counsellor"]);

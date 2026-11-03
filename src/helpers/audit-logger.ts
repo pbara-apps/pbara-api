@@ -14,7 +14,8 @@ export type AuditEntityType =
   | "member"
   | "portal_account"
   | "settings"
-  | "chapter_request";
+  | "chapter_request"
+  | "achievement";
 
 export type AuditActor = {
   id?: string;

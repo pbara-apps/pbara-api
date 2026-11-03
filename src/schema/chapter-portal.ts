@@ -205,3 +205,35 @@ export const portalRegistrationSchema = z.object({
 export const portalRegistrationListSchema = z.object({
   query: z.object({ chapterId: objectId.optional() }),
 });
+
+// ─── Achievements ──────────────────────────────────────────────────────────
+
+const achievementFields = z.object({
+  name: z.string().trim().min(3, "Enter the achievement").max(150),
+  proofUrl: z.string().trim().url("Upload the proof"),
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(1950).max(2100),
+  description: z.string().trim().max(1000).optional().nullable(),
+});
+
+export const createAchievementSchema = z.object({
+  body: achievementFields.extend({ chapterId: objectId }),
+});
+
+export const updateAchievementSchema = z.object({
+  params: idParam,
+  body: achievementFields.partial(),
+});
+
+export const achievementIdSchema = z.object({ params: idParam });
+
+export const listAchievementsSchema = z.object({
+  query: z.object({ chapterId: objectId.optional() }),
+});
+
+export const adminAchievementListSchema = z.object({
+  query: z.object({
+    churchId: objectId.optional(),
+    year: z.coerce.number().int().min(1950).max(2100).optional(),
+  }),
+});

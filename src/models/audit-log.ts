@@ -24,6 +24,7 @@ const auditLogSchema = new mongoose.Schema(
         "portal_account",
         "settings",
         "chapter_request",
+        "achievement",
       ],
     },
     entity_id: { type: String, default: null },

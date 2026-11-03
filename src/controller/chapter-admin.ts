@@ -1,5 +1,6 @@
 import { asyncHandler } from "@/helpers/async-handler";
 import { getActor } from "@/helpers/request-actor";
+import AchievementService from "@/service/achievement";
 import ChapterRequestService from "@/service/chapter-request";
 import PortalAccountService from "@/service/portal-account";
 import RecruitmentService from "@/service/recruitment";
@@ -50,6 +51,15 @@ const ChapterAdminController = {
   rejectChapterRequest: asyncHandler(async (req, res) => {
     await ChapterRequestService.reject(req.params.id as string, req.body.note, getActor(req));
     res.status(200).json({ message: "Chapter request rejected", data: null });
+  }),
+
+  // Achievements (read only)
+  listAchievements: asyncHandler(async (req, res) => {
+    const data = await AchievementService.listAll({
+      churchId: req.query.churchId as string | undefined,
+      year: req.query.year ? Number(req.query.year) : undefined,
+    });
+    res.status(200).json({ message: "Achievements fetched successfully", data });
   }),
 
   // Recruitment Board

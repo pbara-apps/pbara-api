@@ -19,6 +19,7 @@ import subscriberRoutes from "./subscriber";
 import chapterPortalRoutes from "./chapter-portal";
 import chapterAdminRoutes from "./chapter-admin";
 import notificationRoutes from "./notification";
+import financeRoutes from "./finance";
 
 const router = express.Router();
 
@@ -46,6 +47,7 @@ router.use("/subscriber", subscriberRoutes);
 router.use("/chapter-portal", chapterPortalRoutes);
 router.use("/chapter-admin", chapterAdminRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/finance", financeRoutes);
 
 router.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const safeMessage =

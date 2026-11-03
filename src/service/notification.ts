@@ -1,6 +1,7 @@
 import ExecutiveDao from "@/dao/executive";
 import NotificationDao, { type Recipient } from "@/dao/notification";
 import PortalUserDao from "@/dao/portal-user";
+import type { ExecutiveRole } from "@/helpers/auth-user";
 
 /**
  * Notification service — in-app notifications for admins and chapter officers.
@@ -46,6 +47,16 @@ const NotificationService = {
     }
   },
 
+  /** Every executive with one of these roles (e.g. finance + admins for payments). */
+  async notifyExecutiveRoles(roles: ExecutiveRole[], content: NotificationContent) {
+    try {
+      const ids = (await Promise.all(roles.map((r) => ExecutiveDao.findIdsByRole(r)))).flat();
+      await send(ids.map((id) => ({ type: "executive", id })), content);
+    } catch (error) {
+      console.error("[Notification] role lookup failed:", error);
+    }
+  },
+
   /** Every super admin and admin (e.g. registration issues they should look at). */
   async notifyAdmins(content: NotificationContent) {
     try {
@@ -66,6 +77,16 @@ const NotificationService = {
       await send(ids.map((id) => ({ type: "portal_user", id })), content);
     } catch (error) {
       console.error("[Notification] officer lookup failed:", error);
+    }
+  },
+
+  /** The counsellor(s) of these churches (e.g. for church-level bills). */
+  async notifyCounsellors(churchIds: string[], content: NotificationContent) {
+    try {
+      const ids = await PortalUserDao.findActiveIdsForChapters([], churchIds);
+      await send(ids.map((id) => ({ type: "portal_user", id })), content);
+    } catch (error) {
+      console.error("[Notification] counsellor lookup failed:", error);
     }
   },
 

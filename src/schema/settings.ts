@@ -13,6 +13,6 @@ export const updateExecutiveRoleSchema = z.object({
     id: z.string().min(1),
   }),
   body: z.object({
-    role: z.enum(["super_admin", "admin", "editor", "viewer"]),
+    role: z.enum(["super_admin", "admin", "editor", "finance", "viewer"]),
   }),
 });

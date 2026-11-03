@@ -63,7 +63,8 @@ const executiveSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ["super_admin", "admin", "editor", "viewer"],
+      // finance: manages dues, levies and payment verification; view-only elsewhere.
+      enum: ["super_admin", "admin", "editor", "finance", "viewer"],
       default: "viewer",
     },
   },

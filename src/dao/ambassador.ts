@@ -106,6 +106,19 @@ const AmbassadorDao = {
     ]);
     return new Map(rows.map((r) => [String(r._id), r.count]));
   },
+  /** Active member count per church, as a Map of churchId → count. */
+  async countActiveByChurches(churchIds: string[]) {
+    const rows = await AmbassadorModel.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+      {
+        $match: {
+          church: { $in: churchIds.map((id) => new mongoose.Types.ObjectId(id)) },
+          status: "active",
+        },
+      },
+      { $group: { _id: "$church", count: { $sum: 1 } } },
+    ]);
+    return new Map(rows.map((r) => [String(r._id), r.count]));
+  },
   async countActiveInChurch(churchId: string) {
     return await AmbassadorModel.countDocuments({ church: churchId, status: "active" }).exec();
   },

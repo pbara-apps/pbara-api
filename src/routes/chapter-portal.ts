@@ -1,6 +1,8 @@
 import PortalAuthController from "@/controller/portal-auth";
 import ChapterPortalController from "@/controller/chapter-portal";
 import { PortalNotificationController as Notifications } from "@/controller/notification";
+import { PortalFinanceController as Finance } from "@/controller/finance";
+import { portalBillsSchema, submitPaymentSchema } from "@/schema/finance";
 import {
   requirePasswordChanged,
   requirePortalAuth,
@@ -89,6 +91,9 @@ portal.get("/achievements", [validate(listAchievementsSchema), ChapterPortalCont
 portal.post("/achievements", [validate(createAchievementSchema), ChapterPortalController.createAchievement]);
 portal.patch("/achievements/:id", [validate(updateAchievementSchema), ChapterPortalController.updateAchievement]);
 portal.delete("/achievements/:id", [validate(achievementIdSchema), ChapterPortalController.deleteAchievement]);
+
+portal.get("/dues", [validate(portalBillsSchema), Finance.bills]);
+portal.post("/dues/payments", [validate(submitPaymentSchema), Finance.submitPayment]);
 
 // 4. Counsellor only: chapter presidents and secretaries.
 const counsellorOnly = requirePortalRole(["counsellor"]);

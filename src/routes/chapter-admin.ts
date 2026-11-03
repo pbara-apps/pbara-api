@@ -31,7 +31,7 @@ import express from "express";
 const router = express.Router();
 
 const adminOrSuperAdmin = requireRole(["super_admin", "admin"]);
-const canViewBoard = requireRole(["super_admin", "admin", "editor", "viewer"]);
+const canViewBoard = requireRole(["super_admin", "admin", "editor", "finance", "viewer"]);
 
 router.get("/churches/:id/counsellor", [
   requireAuth,

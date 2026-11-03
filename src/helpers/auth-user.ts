@@ -1,6 +1,6 @@
 import { Request } from "express";
 
-export type ExecutiveRole = "super_admin" | "admin" | "editor" | "viewer";
+export type ExecutiveRole = "super_admin" | "admin" | "editor" | "finance" | "viewer";
 
 export type AuthUser = {
   id: string;

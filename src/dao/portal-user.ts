@@ -70,6 +70,17 @@ const PortalUserDao = {
       .exec();
     return docs.map((d) => String(d._id));
   },
+  /** Active portal accounts in the given churches (or every church). */
+  async findActiveIdsByChurches(churchIds: string[] | "all") {
+    const docs = await PortalUserModel.find({
+      isActive: true,
+      ...(churchIds === "all" ? {} : { church: { $in: churchIds } }),
+    })
+      .select("_id")
+      .lean()
+      .exec();
+    return docs.map((d) => String(d._id));
+  },
   /** Removes access for every portal account in a church (used when the church is deleted). */
   async deactivateByChurch(churchId: string) {
     return await PortalUserModel.updateMany({ church: churchId }, { isActive: false }).exec();

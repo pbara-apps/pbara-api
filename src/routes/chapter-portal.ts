@@ -3,6 +3,15 @@ import ChapterPortalController from "@/controller/chapter-portal";
 import { PortalNotificationController as Notifications } from "@/controller/notification";
 import { PortalFinanceController as Finance } from "@/controller/finance";
 import { portalBillsSchema, submitPaymentSchema } from "@/schema/finance";
+import { EngagementPortalController as Engagement } from "@/controller/engagement";
+import {
+  censusStatusSchema,
+  chapterQuerySchema,
+  createMeetingSchema,
+  idOnlySchema,
+  submitCensusSchema,
+  updateMeetingSchema,
+} from "@/schema/engagement";
 import {
   requirePasswordChanged,
   requirePortalAuth,
@@ -99,6 +108,16 @@ portal.post("/dues/payments", [validate(submitPaymentSchema), Finance.submitPaym
 portal.get("/transfers", ChapterPortalController.listTransfers);
 portal.get("/transfers/destinations", ChapterPortalController.transferDestinations);
 portal.post("/transfers", [validate(requestTransferSchema), ChapterPortalController.requestTransfer]);
+
+portal.get("/announcements", Engagement.listAnnouncements);
+portal.post("/announcements/:id/read", [validate(idOnlySchema), Engagement.readAnnouncement]);
+portal.get("/meetings", [validate(chapterQuerySchema), Engagement.listMeetings]);
+portal.post("/meetings", [validate(createMeetingSchema), Engagement.createMeeting]);
+portal.patch("/meetings/:id", [validate(updateMeetingSchema), Engagement.updateMeeting]);
+portal.delete("/meetings/:id", [validate(idOnlySchema), Engagement.deleteMeeting]);
+portal.get("/members/:id/attendance", [validate(idOnlySchema), Engagement.memberAttendance]);
+portal.get("/census", [validate(censusStatusSchema), Engagement.censusStatus]);
+portal.post("/census", [validate(submitCensusSchema), Engagement.submitCensus]);
 
 // 4. Counsellor only: chapter presidents and secretaries.
 const counsellorOnly = requirePortalRole(["counsellor"]);

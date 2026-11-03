@@ -18,7 +18,10 @@ export type AuditEntityType =
   | "achievement"
   | "due"
   | "payment"
-  | "transfer";
+  | "transfer"
+  | "announcement"
+  | "meeting"
+  | "census";
 
 export type AuditActor = {
   id?: string;

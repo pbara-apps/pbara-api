@@ -4,7 +4,11 @@ import requireRole from "@/middleware/requireRole";
 import requireSuperAdmin from "@/middleware/requireSuperAdmin";
 import validate from "@/middleware/validate";
 import {
+  adminChapterListSchema,
   approveMembersSchema,
+  chapterRequestIdSchema,
+  chapterRequestListSchema,
+  rejectChapterRequestSchema,
   assignCounsellorSchema,
   churchIdSchema,
   recruitmentListSchema,
@@ -41,6 +45,32 @@ router.post("/churches/:id/counsellor/resend-password", [
   adminOrSuperAdmin,
   validate(churchIdSchema),
   ChapterAdminController.resendCounsellorPassword,
+]);
+
+// Chapters and new-chapter requests (approving/rejecting: super_admin only)
+router.get("/chapters", [
+  requireAuth,
+  canViewBoard,
+  validate(adminChapterListSchema),
+  ChapterAdminController.listChapters,
+]);
+router.get("/chapter-requests", [
+  requireAuth,
+  canViewBoard,
+  validate(chapterRequestListSchema),
+  ChapterAdminController.listChapterRequests,
+]);
+router.post("/chapter-requests/:id/approve", [
+  requireAuth,
+  requireSuperAdmin,
+  validate(chapterRequestIdSchema),
+  ChapterAdminController.approveChapterRequest,
+]);
+router.post("/chapter-requests/:id/reject", [
+  requireAuth,
+  requireSuperAdmin,
+  validate(rejectChapterRequestSchema),
+  ChapterAdminController.rejectChapterRequest,
 ]);
 
 router.get("/recruitment", [

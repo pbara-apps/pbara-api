@@ -128,6 +128,30 @@ export const reviewNoteSchema = z.object({
   }),
 });
 
+// ─── New-chapter requests ──────────────────────────────────────────────────
+
+export const createChapterRequestSchema = z.object({
+  body: z.object({
+    name: z.string().trim().min(3, "Enter the chapter name").max(80),
+    memberIds: z.array(objectId).min(1).max(500),
+  }),
+});
+
+export const chapterRequestIdSchema = z.object({ params: idParam });
+
+export const chapterRequestListSchema = z.object({
+  query: z.object({ status: z.enum(["pending", "rejected"]).optional() }),
+});
+
+export const rejectChapterRequestSchema = z.object({
+  params: idParam,
+  body: z.object({ note: z.string().trim().min(3, "Please add a short reason").max(500) }),
+});
+
+export const adminChapterListSchema = z.object({
+  query: z.object({ churchId: objectId.optional() }),
+});
+
 // ─── Uploads ───────────────────────────────────────────────────────────────
 
 /** What a portal upload is for; decides the storage folder and allowed types. */

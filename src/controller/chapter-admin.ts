@@ -1,5 +1,6 @@
 import { asyncHandler } from "@/helpers/async-handler";
 import { getActor } from "@/helpers/request-actor";
+import ChapterRequestService from "@/service/chapter-request";
 import PortalAccountService from "@/service/portal-account";
 import RecruitmentService from "@/service/recruitment";
 
@@ -26,6 +27,29 @@ const ChapterAdminController = {
       getActor(req),
     );
     res.status(200).json({ message: "One-time password reset", data });
+  }),
+
+  // Chapters and new-chapter requests
+  listChapters: asyncHandler(async (req, res) => {
+    const data = await ChapterRequestService.listActiveChapters(req.query.churchId as string | undefined);
+    res.status(200).json({ message: "Chapters fetched successfully", data });
+  }),
+
+  listChapterRequests: asyncHandler(async (req, res) => {
+    const data = await ChapterRequestService.listRequests(
+      (req.query.status as "pending" | "rejected" | undefined) ?? "pending",
+    );
+    res.status(200).json({ message: "Chapter requests fetched successfully", data });
+  }),
+
+  approveChapterRequest: asyncHandler(async (req, res) => {
+    const data = await ChapterRequestService.approve(req.params.id as string, getActor(req));
+    res.status(200).json({ message: `Chapter approved; ${data.moved} members moved`, data });
+  }),
+
+  rejectChapterRequest: asyncHandler(async (req, res) => {
+    await ChapterRequestService.reject(req.params.id as string, req.body.note, getActor(req));
+    res.status(200).json({ message: "Chapter request rejected", data: null });
   }),
 
   // Recruitment Board

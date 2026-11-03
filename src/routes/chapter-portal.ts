@@ -11,6 +11,8 @@ import validate from "@/middleware/validate";
 import {
   addMembersSchema,
   assignOfficerSchema,
+  chapterRequestIdSchema,
+  createChapterRequestSchema,
   changePasswordSchema,
   dashboardSchema,
   listMembersSchema,
@@ -71,6 +73,18 @@ portal.post("/upload/:purpose", [
 // 4. Counsellor only: chapter presidents and secretaries.
 const counsellorOnly = requirePortalRole(["counsellor"]);
 portal.get("/officers", [counsellorOnly, ChapterPortalController.listOfficers]);
+
+portal.get("/chapter-requests/overview", [counsellorOnly, ChapterPortalController.chapterOverview]);
+portal.post("/chapter-requests", [
+  counsellorOnly,
+  validate(createChapterRequestSchema),
+  ChapterPortalController.createChapterRequest,
+]);
+portal.delete("/chapter-requests/:id", [
+  counsellorOnly,
+  validate(chapterRequestIdSchema),
+  ChapterPortalController.cancelChapterRequest,
+]);
 portal.post("/officers", [
   counsellorOnly,
   validate(assignOfficerSchema),

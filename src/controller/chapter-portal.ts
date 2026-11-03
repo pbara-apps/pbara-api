@@ -2,6 +2,7 @@ import { asyncHandler } from "@/helpers/async-handler";
 import { getPortalUser } from "@/helpers/portal-auth-user";
 import { httpError } from "@/helpers/http-error";
 import ChapterService from "@/service/chapter";
+import ChapterRequestService from "@/service/chapter-request";
 import MemberService, { type MemberView } from "@/service/member";
 import PortalAccountService from "@/service/portal-account";
 import UploadService from "@/service/upload";
@@ -12,6 +13,22 @@ const ChapterPortalController = {
   listChapters: asyncHandler(async (req, res) => {
     const data = await ChapterService.listChaptersForUser(getPortalUser(req));
     res.status(200).json({ message: "Chapters fetched successfully", data });
+  }),
+
+  // New-chapter requests (counsellor only)
+  chapterOverview: asyncHandler(async (req, res) => {
+    const data = await ChapterRequestService.getOverview(getPortalUser(req));
+    res.status(200).json({ message: "Chapters fetched successfully", data });
+  }),
+
+  createChapterRequest: asyncHandler(async (req, res) => {
+    const data = await ChapterRequestService.createRequest(getPortalUser(req), req.body);
+    res.status(201).json({ message: "Chapter request sent for approval", data });
+  }),
+
+  cancelChapterRequest: asyncHandler(async (req, res) => {
+    await ChapterRequestService.cancelRequest(getPortalUser(req), req.params.id as string);
+    res.status(200).json({ message: "Chapter request withdrawn", data: null });
   }),
 
   // Dashboard

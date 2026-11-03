@@ -78,6 +78,35 @@ const AmbassadorDao = {
   async countByStatus(filter: AmbassadorFilter) {
     return await AmbassadorModel.countDocuments(buildQuery(filter)).exec();
   },
+  /** Active member count per chapter, as a Map of chapterId → count. */
+  async countActiveByChapters(chapterIds: string[]) {
+    const rows = await AmbassadorModel.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+      {
+        $match: {
+          chapter: { $in: chapterIds.map((id) => new mongoose.Types.ObjectId(id)) },
+          status: "active",
+        },
+      },
+      { $group: { _id: "$chapter", count: { $sum: 1 } } },
+    ]);
+    return new Map(rows.map((r) => [String(r._id), r.count]));
+  },
+  async countActiveInChurch(churchId: string) {
+    return await AmbassadorModel.countDocuments({ church: churchId, status: "active" }).exec();
+  },
+  /** Moves members into another chapter (same church). */
+  async moveToChapter(ids: string[], chapterId: string) {
+    return await AmbassadorModel.updateMany({ _id: { $in: ids } }, { $set: { chapter: chapterId } }).exec();
+  },
+  async findBasicByIds(ids: string[]) {
+    return await AmbassadorModel.find({ _id: { $in: ids } })
+      .select("fullName memberId photo status chapter church rank")
+      .populate([
+        { path: "chapter", select: "name" },
+        { path: "rank", select: "name" },
+      ])
+      .exec();
+  },
   async countChangesRequested(chapterIds: string[]) {
     return await AmbassadorModel.countDocuments({
       chapter: { $in: chapterIds },

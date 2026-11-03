@@ -36,6 +36,7 @@ const memberFields = z.object({
 });
 
 const idParam = z.object({ id: objectId });
+const ids = z.array(objectId).min(1).max(200);
 
 // ─── Portal auth ───────────────────────────────────────────────────────────
 
@@ -106,6 +107,25 @@ export const churchIdSchema = z.object({ params: idParam });
 export const assignCounsellorSchema = z.object({
   params: idParam,
   body: accountDetails,
+});
+
+export const recruitmentListSchema = z.object({
+  query: z.object({
+    status: z.enum(["pending", "rejected"]).optional(),
+    search: z.string().trim().max(100).optional(),
+    churchId: objectId.optional(),
+  }),
+});
+
+export const approveMembersSchema = z.object({
+  body: z.object({ ids }),
+});
+
+export const reviewNoteSchema = z.object({
+  body: z.object({
+    ids,
+    note: z.string().trim().min(3, "Please add a short reason").max(500),
+  }),
 });
 
 // ─── Uploads ───────────────────────────────────────────────────────────────

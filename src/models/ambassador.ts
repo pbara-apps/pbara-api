@@ -22,6 +22,19 @@ export const AMBASSADOR_STATUSES = [
 ] as const;
 export type AmbassadorStatus = (typeof AMBASSADOR_STATUSES)[number];
 
+/**
+ * One rank the member has reached. Date and proof are optional.
+ * The list is kept in ladder order; the last entry is the current rank.
+ */
+const rankProgressSchema = new mongoose.Schema(
+  {
+    rank: { type: mongoose.Schema.Types.ObjectId, ref: "Rank", required: true },
+    dateReached: { type: Date, default: null },
+    proofUrl: { type: String, default: null },
+  },
+  { _id: false },
+);
+
 const ambassadorSchema = new mongoose.Schema(
   {
     /** e.g. PBARA-000123. Given on approval; null while pending. */
@@ -35,11 +48,13 @@ const ambassadorSchema = new mongoose.Schema(
     phone: { type: String, default: null, trim: true },
     guardianName: { type: String, default: null, trim: true },
     guardianPhone: { type: String, default: null, trim: true },
+    /** Current rank — always the highest rank in `rankHistory`. */
     rank: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Rank",
       required: true,
     },
+    rankHistory: { type: [rankProgressSchema], default: [] },
     church: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Church",

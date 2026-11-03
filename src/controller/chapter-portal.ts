@@ -98,6 +98,15 @@ const ChapterPortalController = {
     res.status(201).json({ message: "File uploaded successfully", data });
   }),
 
+  setRankHistory: asyncHandler(async (req, res) => {
+    const data = await MemberService.setRankHistory(
+      getPortalUser(req),
+      req.params.id as string,
+      req.body.entries,
+    );
+    res.status(200).json({ message: "Rank progress saved", data });
+  }),
+
   // Officers (counsellor only)
   listOfficers: asyncHandler(async (req, res) => {
     const data = await PortalAccountService.listOfficers(getPortalUser(req));

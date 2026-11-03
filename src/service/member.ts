@@ -21,6 +21,12 @@ import NotificationService from "@/service/notification";
  *   they identify the person; contact details, photo and rank can change.
  */
 
+export type RankProgressInput = {
+  rankId: string;
+  dateReached?: string | null;
+  proofUrl?: string | null;
+};
+
 export type MemberInput = {
   fullName: string;
   rankId: string;
@@ -116,6 +122,8 @@ const MemberService = {
 
     const docs = members.map((member) => ({
       ...toRecordFields(member),
+      // Rank history starts with the rank they joined with.
+      rankHistory: [{ rank: member.rankId }],
       church: chapter.church,
       chapter: chapter._id,
       status: "pending",
@@ -163,6 +171,16 @@ const MemberService = {
       throw httpError(409, `A ${member.status} member can't be edited here`);
     }
 
+    // A new current rank is added to the rank history if it isn't there yet.
+    const history = (member.rankHistory ?? []).map((h) => ({
+      rank: String((h.rank as { _id?: unknown })?._id ?? h.rank),
+      dateReached: h.dateReached,
+      proofUrl: h.proofUrl,
+    }));
+    if (changes.rankId && !history.some((h) => h.rank === changes.rankId)) {
+      extra.rankHistory = [...history, { rank: changes.rankId, dateReached: null, proofUrl: null }];
+    }
+
     const updated = await AmbassadorDao.update(id, { ...toRecordFields(changes), ...extra });
     await logAudit({
       action: "updated",
@@ -180,6 +198,45 @@ const MemberService = {
         link: "/admin/recruitment",
       });
     }
+    return updated;
+  },
+
+  /**
+   * Replaces a member's rank history (the ranks they have reached).
+   * Entries are sorted into ladder order and duplicates are refused; the
+   * highest rank becomes the member's current rank. No approval needed.
+   */
+  async setRankHistory(user: PortalAuthUser, id: string, entries: RankProgressInput[]) {
+    const member = await getMemberInScope(user, id);
+    if (member.status === "transferred" || member.status === "inactive") {
+      throw httpError(409, `A ${member.status} member's ranks can't be changed here`);
+    }
+
+    const rankIds = entries.map((e) => e.rankId);
+    if (new Set(rankIds).size !== rankIds.length) {
+      throw httpError(400, "Each rank can only appear once");
+    }
+    const ranks = await RankDao.findByIds(rankIds);
+    if (ranks.length !== rankIds.length) throw httpError(400, "One or more ranks are not valid");
+
+    const orderOf = new Map(ranks.map((r) => [String(r._id), r.order ?? Number.MAX_SAFE_INTEGER]));
+    const sorted = [...entries].sort((a, b) => orderOf.get(a.rankId)! - orderOf.get(b.rankId)!);
+    const rankHistory = sorted.map((e) => ({
+      rank: e.rankId,
+      dateReached: e.dateReached ? new Date(e.dateReached) : null,
+      proofUrl: emptyToNull(e.proofUrl),
+    }));
+    const currentRankId = sorted[sorted.length - 1].rankId;
+
+    const updated = await AmbassadorDao.update(id, { rankHistory, rank: currentRankId });
+    await logAudit({
+      action: "updated",
+      entityType: "member",
+      entityId: id,
+      entityTitle: member.fullName,
+      actor: actorOf(user),
+      detail: `Rank progress updated (${rankHistory.length} rank${rankHistory.length === 1 ? "" : "s"})`,
+    });
     return updated;
   },
 

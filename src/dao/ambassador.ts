@@ -30,6 +30,7 @@ const POPULATE = [
   { path: "chapter", select: "name" },
   { path: "church", select: "name" },
   { path: "submittedBy", select: "name role" },
+  { path: "rankHistory.rank", select: "name order image" },
 ];
 
 /** Database queries for ambassador (member) records. */

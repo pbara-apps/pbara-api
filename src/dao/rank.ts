@@ -61,6 +61,9 @@ const RankDao = {
   async deleteMany(ids: string[]) {
     return await RankModel.deleteMany({ _id: { $in: ids } }).exec();
   },
+  async findByIds(ids: string[]) {
+    return await RankModel.find({ _id: { $in: ids } }).select("_id name order").lean().exec();
+  },
   async countByIds(ids: string[]) {
     return await RankModel.countDocuments({ _id: { $in: ids } }).exec();
   },

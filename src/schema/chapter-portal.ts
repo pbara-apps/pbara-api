@@ -152,6 +152,31 @@ export const adminChapterListSchema = z.object({
   query: z.object({ churchId: objectId.optional() }),
 });
 
+// ─── Rank progress ─────────────────────────────────────────────────────────
+
+const optionalPastDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use the format YYYY-MM-DD")
+  .refine((value) => new Date(value) <= new Date(), "Date can't be in the future")
+  .optional()
+  .nullable();
+
+export const rankHistorySchema = z.object({
+  params: idParam,
+  body: z.object({
+    entries: z
+      .array(
+        z.object({
+          rankId: objectId,
+          dateReached: optionalPastDate,
+          proofUrl: z.string().trim().max(500).optional().nullable(),
+        }),
+      )
+      .min(1, "Keep at least one rank")
+      .max(50),
+  }),
+});
+
 // ─── Uploads ───────────────────────────────────────────────────────────────
 
 /** What a portal upload is for; decides the storage folder and allowed types. */

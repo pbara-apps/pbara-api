@@ -6,6 +6,7 @@ import { cleanName, toNameKey } from "@/helpers/member-utils";
 import type { PortalAuthUser } from "@/helpers/portal-auth-user";
 import type { AmbassadorStatus } from "@/models/ambassador";
 import ChapterService from "@/service/chapter";
+import NotificationService from "@/service/notification";
 
 /**
  * Member service — the chapter portal's view of ambassadors.
@@ -130,6 +131,12 @@ const MemberService = {
       actor: actorOf(user),
       detail: `Submitted for approval in ${chapter.name}`,
     });
+    await NotificationService.notifySuperAdmins({
+      type: "members.submitted",
+      title: "New members to review",
+      message: `${created.length} new member${created.length === 1 ? "" : "s"} from ${chapter.name} ${created.length === 1 ? "is" : "are"} waiting for approval.`,
+      link: "/admin/recruitment",
+    });
     return created;
   },
 
@@ -165,6 +172,14 @@ const MemberService = {
       actor: actorOf(user),
       detail: extra.status ? "Edited and resubmitted for approval" : "Details updated",
     });
+    if (extra.status) {
+      await NotificationService.notifySuperAdmins({
+        type: "members.resubmitted",
+        title: "Member resubmitted",
+        message: `${updated?.fullName ?? member.fullName} was updated by the chapter and is ready for review again.`,
+        link: "/admin/recruitment",
+      });
+    }
     return updated;
   },
 

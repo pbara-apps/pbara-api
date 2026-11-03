@@ -1,3 +1,4 @@
+import type { ExecutiveRole } from "@/helpers/auth-user";
 import ExecutiveModel from "@/models/executive";
 import { ExecutiveTypes } from "@/types/_types";
 
@@ -9,6 +10,11 @@ const ExecutiveDao = {
     return await ExecutiveModel.findById(created._id)
       .populate([...POPULATE_FIELDS])
       .exec();
+  },
+  /** Ids of every executive with the given role (e.g. all super admins). */
+  async findIdsByRole(role: ExecutiveRole) {
+    const docs = await ExecutiveModel.find({ role }).select("_id").lean().exec();
+    return docs.map((d) => String(d._id));
   },
   async findAll() {
     return await ExecutiveModel.find().populate([...POPULATE_FIELDS]).exec();

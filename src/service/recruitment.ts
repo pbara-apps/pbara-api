@@ -2,6 +2,7 @@ import AmbassadorDao from "@/dao/ambassador";
 import CounterDao from "@/dao/counter";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
 import { formatMemberId, isSameDay } from "@/helpers/member-utils";
+import NotificationService from "@/service/notification";
 
 /**
  * Recruitment service — the association's review of new members.
@@ -64,6 +65,34 @@ function describeMatch(member: AmbassadorDoc, other: AmbassadorDoc, strength: Ma
   };
 }
 
+type ReviewedMember = { fullName: string; chapter: unknown; church: unknown };
+
+/** "Tunde Ade, Bola Ige and 3 others" */
+function nameList(names: string[]) {
+  if (names.length <= 2) return names.join(" and ");
+  return `${names.slice(0, 2).join(", ")} and ${names.length - 2} other${names.length - 2 === 1 ? "" : "s"}`;
+}
+
+/**
+ * Tells each affected chapter about a review decision. Members are grouped
+ * by chapter so each chapter gets one notification, not one per member.
+ */
+async function notifyChapters(
+  members: ReviewedMember[],
+  build: (names: string[]) => { type: string; title: string; message: string; link: string },
+) {
+  const byChapter = new Map<string, { churchId: string; names: string[] }>();
+  for (const m of members) {
+    const chapterId = refId(m.chapter);
+    const group = byChapter.get(chapterId) ?? { churchId: refId(m.church), names: [] };
+    group.names.push(m.fullName);
+    byChapter.set(chapterId, group);
+  }
+  for (const [chapterId, group] of byChapter) {
+    await NotificationService.notifyChapterOfficers([chapterId], [group.churchId], build(group.names));
+  }
+}
+
 const RecruitmentService = {
   /** Members waiting for review (or rejected), each with its duplicate matches. */
   async listRequests(query: { status?: "pending" | "rejected"; search?: string; churchId?: string }) {
@@ -90,6 +119,7 @@ const RecruitmentService = {
   async approve(ids: string[], actor: AuditActor) {
     const members = await AmbassadorDao.findByIds(ids);
     const approvedNames: string[] = [];
+    const approvedMembers: ReviewedMember[] = [];
     for (const member of members) {
       if (member.status !== "pending") continue;
       const memberId = formatMemberId(await CounterDao.next("member-id"));
@@ -103,6 +133,7 @@ const RecruitmentService = {
         approvedAt: new Date(),
       });
       approvedNames.push(member.fullName);
+      approvedMembers.push(member);
     }
     if (approvedNames.length > 0) {
       await logAudit({
@@ -114,6 +145,12 @@ const RecruitmentService = {
         detail: "Approved as association members",
       });
     }
+    await notifyChapters(approvedMembers, (names) => ({
+      type: "members.approved",
+      title: "Members approved",
+      message: `${nameList(names)} ${names.length === 1 ? "is" : "are"} now approved association member${names.length === 1 ? "" : "s"}.`,
+      link: "/chapter/members",
+    }));
     return { approved: approvedNames.length, skipped: ids.length - approvedNames.length };
   },
 
@@ -124,6 +161,12 @@ const RecruitmentService = {
     return await RecruitmentService.review(ids, actor, {
       update: { status: "rejected", changesRequested: false, reviewNote: reason },
       detail: `Rejected: ${reason}`,
+      notify: (names) => ({
+        type: "members.rejected",
+        title: "Members not approved",
+        message: `${nameList(names)} ${names.length === 1 ? "was" : "were"} not approved. Reason: ${reason}`,
+        link: "/chapter/members?view=awaiting",
+      }),
     });
   },
 
@@ -132,6 +175,12 @@ const RecruitmentService = {
     return await RecruitmentService.review(ids, actor, {
       update: { changesRequested: true, reviewNote: note },
       detail: `Changes requested: ${note}`,
+      notify: (names) => ({
+        type: "members.changes_requested",
+        title: "Changes needed",
+        message: `The association asked for changes to ${nameList(names)}: ${note}`,
+        link: "/chapter/members?view=awaiting",
+      }),
     });
   },
 
@@ -142,6 +191,7 @@ const RecruitmentService = {
     action: {
       update: Record<string, unknown>;
       detail: string;
+      notify: (names: string[]) => { type: string; title: string; message: string; link: string };
     },
   ) {
     const members = await AmbassadorDao.findByIds(ids);
@@ -161,6 +211,7 @@ const RecruitmentService = {
         actor,
         detail: action.detail,
       });
+      await notifyChapters(pending, action.notify);
     }
     return {
       updated: pending.length,

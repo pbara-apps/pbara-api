@@ -53,6 +53,23 @@ const PortalUserDao = {
       .sort({ role: 1 })
       .exec();
   },
+  /**
+   * Active accounts that look after the given chapters: their presidents and
+   * secretaries plus the counsellor of each chapter's church.
+   */
+  async findActiveIdsForChapters(chapterIds: string[], churchIds: string[]) {
+    const docs = await PortalUserModel.find({
+      isActive: true,
+      $or: [
+        { chapter: { $in: chapterIds } },
+        { role: "counsellor", church: { $in: churchIds } },
+      ],
+    })
+      .select("_id")
+      .lean()
+      .exec();
+    return docs.map((d) => String(d._id));
+  },
   /** Removes access for every portal account in a church (used when the church is deleted). */
   async deactivateByChurch(churchId: string) {
     return await PortalUserModel.updateMany({ church: churchId }, { isActive: false }).exec();

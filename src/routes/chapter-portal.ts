@@ -1,5 +1,6 @@
 import PortalAuthController from "@/controller/portal-auth";
 import ChapterPortalController from "@/controller/chapter-portal";
+import { PortalNotificationController as Notifications } from "@/controller/notification";
 import {
   requirePasswordChanged,
   requirePortalAuth,
@@ -49,6 +50,11 @@ const portal = express.Router();
 portal.use(requirePortalAuth, requirePasswordChanged);
 
 portal.get("/chapters", ChapterPortalController.listChapters);
+
+portal.get("/notifications", Notifications.list);
+portal.get("/notifications/unread-count", Notifications.unreadCount);
+portal.post("/notifications/read-all", Notifications.markAllRead);
+portal.patch("/notifications/:id/read", [validate(memberIdSchema), Notifications.markRead]);
 portal.get("/dashboard", [validate(dashboardSchema), ChapterPortalController.dashboard]);
 
 portal.get("/members", [validate(listMembersSchema), ChapterPortalController.listMembers]);

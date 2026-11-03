@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
 
+/**
+ * Rank — an official Royal Ambassador rank (e.g. Candidate, Intern, Envoy).
+ *
+ * `order` is the rank's position in the progression ladder:
+ * 1 is the first (lowest) rank, higher numbers are more senior.
+ * Every rank list in the system is sorted by it, and the member
+ * rank-progress line uses it to draw ranks in sequence.
+ */
+
 const rankSchema = new mongoose.Schema(
   {
     name: {
@@ -18,6 +27,12 @@ const rankSchema = new mongoose.Schema(
     image: {
       type: String,
       default: null,
+    },
+    order: {
+      type: Number,
+      min: 1,
+      default: null,
+      index: true,
     },
   },
   { timestamps: true },

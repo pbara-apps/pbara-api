@@ -43,6 +43,8 @@ export interface RankTypes {
   description: string;
   category: string;
   image?: string | null;
+  /** Position in the rank ladder (1 = lowest). Assigned automatically when omitted. */
+  order?: number | null;
 }
 
 export interface DirectorDeskTypes {

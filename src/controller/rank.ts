@@ -92,6 +92,17 @@ const RankController = {
       next(error);
     }
   },
+  /** Saves a new rank ladder. Body: { ids: string[] }, lowest rank first. */
+  async reorderRanks(req: Request, res: Response, next: NextFunction) {
+    try {
+      const ranks = await RankService.reorderRanks(req.body.ids);
+      return res
+        .status(200)
+        .json({ message: "Rank order updated successfully", data: ranks });
+    } catch (error) {
+      next(error);
+    }
+  },
   async deleteRank(req: Request, res: Response, next: NextFunction) {
     try {
       await RankService.deleteRank(req.params.id as string);

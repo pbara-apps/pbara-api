@@ -27,6 +27,7 @@ const auditLogSchema = new mongoose.Schema(
         "achievement",
         "due",
         "payment",
+        "transfer",
       ],
     },
     entity_id: { type: String, default: null },

@@ -7,6 +7,7 @@ import MembershipOverviewService from "@/service/membership-overview";
 import type { AmbassadorStatus } from "@/models/ambassador";
 import PortalAccountService from "@/service/portal-account";
 import RecruitmentService from "@/service/recruitment";
+import TransferService from "@/service/transfer";
 
 /** Association side: church counsellor logins and the Recruitment Board. */
 const ChapterAdminController = {
@@ -101,6 +102,24 @@ const ChapterAdminController = {
       year: req.query.year ? Number(req.query.year) : undefined,
     });
     res.status(200).json({ message: "Achievements fetched successfully", data });
+  }),
+
+  // Transfers
+  listTransfers: asyncHandler(async (req, res) => {
+    const status = (req.query.status as "pending" | "approved" | "rejected" | undefined) ?? "pending";
+    res.status(200).json({ message: "Transfers fetched", data: await TransferService.listForAdmin(status) });
+  }),
+  approveTransfer: asyncHandler(async (req, res) => {
+    await TransferService.approve(req.params.id as string, getActor(req));
+    res.status(200).json({ message: "Transfer approved", data: null });
+  }),
+  rejectTransfer: asyncHandler(async (req, res) => {
+    await TransferService.reject(req.params.id as string, req.body.note, getActor(req));
+    res.status(200).json({ message: "Transfer rejected", data: null });
+  }),
+  mergeDuplicate: asyncHandler(async (req, res) => {
+    await TransferService.mergeAsTransfer(req.params.id as string, req.body.existingId, getActor(req));
+    res.status(200).json({ message: "Merged: existing member moved to the submitting chapter", data: null });
   }),
 
   // Recruitment Board

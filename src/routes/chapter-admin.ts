@@ -10,6 +10,10 @@ import {
   adminMemberUpdateSchema,
   adminChapterListSchema,
   approveMembersSchema,
+  mergeDuplicateSchema,
+  rejectTransferSchema,
+  transferIdSchema,
+  transferListSchema,
   chapterRequestIdSchema,
   chapterRequestListSchema,
   rejectChapterRequestSchema,
@@ -102,6 +106,12 @@ router.get("/achievements", [
   validate(adminAchievementListSchema),
   ChapterAdminController.listAchievements,
 ]);
+
+// Transfers (approve/reject and duplicate merge: super_admin only)
+router.get("/transfers", [requireAuth, canViewBoard, validate(transferListSchema), ChapterAdminController.listTransfers]);
+router.post("/transfers/:id/approve", [requireAuth, requireSuperAdmin, validate(transferIdSchema), ChapterAdminController.approveTransfer]);
+router.post("/transfers/:id/reject", [requireAuth, requireSuperAdmin, validate(rejectTransferSchema), ChapterAdminController.rejectTransfer]);
+router.post("/recruitment/:id/merge", [requireAuth, requireSuperAdmin, validate(mergeDuplicateSchema), ChapterAdminController.mergeDuplicate]);
 
 router.get("/recruitment", [
   requireAuth,

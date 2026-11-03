@@ -122,9 +122,25 @@ const AmbassadorDao = {
   async countActiveInChurch(churchId: string) {
     return await AmbassadorModel.countDocuments({ church: churchId, status: "active" }).exec();
   },
-  /** Moves members into another chapter (same church). */
-  async moveToChapter(ids: string[], chapterId: string) {
-    return await AmbassadorModel.updateMany({ _id: { $in: ids } }, { $set: { chapter: chapterId } }).exec();
+  /**
+   * Moves members into another chapter, recording the move in each
+   * member's chapter history. `churchId` changes too for cross-church moves.
+   */
+  async moveToChapter(ids: string[], chapterId: string, churchId?: string) {
+    const members = await AmbassadorModel.find({ _id: { $in: ids } }).select("chapter").exec();
+    const movedAt = new Date();
+    const toChapter = new mongoose.Types.ObjectId(chapterId);
+    const set = churchId
+      ? { chapter: toChapter, church: new mongoose.Types.ObjectId(churchId) }
+      : { chapter: toChapter };
+    await Promise.all(
+      members.map((m) =>
+        AmbassadorModel.updateOne(
+          { _id: m._id },
+          { $set: set, $push: { chapterHistory: { fromChapter: m.chapter, toChapter, movedAt } } },
+        ).exec(),
+      ),
+    );
   },
   async findBasicByIds(ids: string[]) {
     return await AmbassadorModel.find({ _id: { $in: ids } })

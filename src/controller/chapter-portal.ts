@@ -7,6 +7,7 @@ import ChapterRequestService from "@/service/chapter-request";
 import MemberService, { type MemberView } from "@/service/member";
 import PortalAccountService from "@/service/portal-account";
 import PortalRegistrationService from "@/service/portal-registration";
+import TransferService from "@/service/transfer";
 import UploadService from "@/service/upload";
 
 /** Chapter portal: chapters, members, dashboard and (counsellor only) officers. */
@@ -77,6 +78,18 @@ const ChapterPortalController = {
   deleteAchievement: asyncHandler(async (req, res) => {
     await AchievementService.remove(getPortalUser(req), req.params.id as string);
     res.status(200).json({ message: "Achievement removed", data: null });
+  }),
+
+  // Transfers
+  transferDestinations: asyncHandler(async (_req, res) => {
+    res.status(200).json({ message: "Chapters fetched", data: await TransferService.destinations() });
+  }),
+  listTransfers: asyncHandler(async (req, res) => {
+    res.status(200).json({ message: "Transfers fetched", data: await TransferService.listForPortal(getPortalUser(req)) });
+  }),
+  requestTransfer: asyncHandler(async (req, res) => {
+    const data = await TransferService.request(getPortalUser(req), req.body);
+    res.status(201).json({ message: "Transfer request sent for approval", data });
   }),
 
   // Dashboard

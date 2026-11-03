@@ -17,7 +17,8 @@ export type AuditEntityType =
   | "chapter_request"
   | "achievement"
   | "due"
-  | "payment";
+  | "payment"
+  | "transfer";
 
 export type AuditActor = {
   id?: string;

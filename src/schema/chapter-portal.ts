@@ -264,3 +264,29 @@ export const adminMemberStatusSchema = z.object({
     reason: z.string().trim().max(300).optional().nullable(),
   }),
 });
+
+// ─── Transfers ─────────────────────────────────────────────────────────────
+
+export const requestTransferSchema = z.object({
+  body: z.object({
+    memberId: objectId,
+    toChapterId: objectId,
+    reason: z.string().trim().max(300).optional().nullable(),
+  }),
+});
+
+export const transferListSchema = z.object({
+  query: z.object({ status: z.enum(["pending", "approved", "rejected"]).optional() }),
+});
+
+export const transferIdSchema = z.object({ params: idParam });
+
+export const rejectTransferSchema = z.object({
+  params: idParam,
+  body: z.object({ note: z.string().trim().min(3, "Please add a short reason").max(300) }),
+});
+
+export const mergeDuplicateSchema = z.object({
+  params: idParam,
+  body: z.object({ existingId: objectId }),
+});

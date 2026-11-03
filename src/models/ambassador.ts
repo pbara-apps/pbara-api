@@ -35,6 +35,16 @@ const rankProgressSchema = new mongoose.Schema(
   { _id: false },
 );
 
+/** A completed move between chapters, kept so a member's history stays complete. */
+const chapterMoveSchema = new mongoose.Schema(
+  {
+    fromChapter: { type: mongoose.Schema.Types.ObjectId, ref: "Chapter", required: true },
+    toChapter: { type: mongoose.Schema.Types.ObjectId, ref: "Chapter", required: true },
+    movedAt: { type: Date, required: true },
+  },
+  { _id: false },
+);
+
 const ambassadorSchema = new mongoose.Schema(
   {
     /** e.g. PBARA-000123. Given on approval; null while pending. */
@@ -55,6 +65,8 @@ const ambassadorSchema = new mongoose.Schema(
       required: true,
     },
     rankHistory: { type: [rankProgressSchema], default: [] },
+    /** Every chapter move (transfers and new-chapter moves). */
+    chapterHistory: { type: [chapterMoveSchema], default: [] },
     church: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Church",

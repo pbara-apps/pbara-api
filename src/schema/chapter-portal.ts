@@ -237,3 +237,30 @@ export const adminAchievementListSchema = z.object({
     year: z.coerce.number().int().min(1950).max(2100).optional(),
   }),
 });
+
+// ─── Association member directory ──────────────────────────────────────────
+
+export const adminMemberListSchema = z.object({
+  query: z.object({
+    search: z.string().trim().max(100).optional(),
+    churchId: objectId.optional(),
+    chapterId: objectId.optional(),
+    rankId: objectId.optional(),
+    status: z.enum(["active", "inactive", "transferred"]).optional(),
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(5000).optional(),
+  }),
+});
+
+export const adminMemberUpdateSchema = z.object({
+  params: idParam,
+  body: memberFields.partial(),
+});
+
+export const adminMemberStatusSchema = z.object({
+  params: idParam,
+  body: z.object({
+    status: z.enum(["active", "inactive"]),
+    reason: z.string().trim().max(300).optional().nullable(),
+  }),
+});

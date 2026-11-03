@@ -5,6 +5,9 @@ import requireSuperAdmin from "@/middleware/requireSuperAdmin";
 import validate from "@/middleware/validate";
 import {
   adminAchievementListSchema,
+  adminMemberListSchema,
+  adminMemberStatusSchema,
+  adminMemberUpdateSchema,
   adminChapterListSchema,
   approveMembersSchema,
   chapterRequestIdSchema,
@@ -12,6 +15,7 @@ import {
   rejectChapterRequestSchema,
   assignCounsellorSchema,
   churchIdSchema,
+  memberIdSchema,
   recruitmentListSchema,
   reviewNoteSchema,
 } from "@/schema/chapter-portal";
@@ -72,6 +76,24 @@ router.post("/chapter-requests/:id/reject", [
   requireSuperAdmin,
   validate(rejectChapterRequestSchema),
   ChapterAdminController.rejectChapterRequest,
+]);
+
+router.get("/overview", [requireAuth, canViewBoard, ChapterAdminController.overview]);
+
+// Member directory: everyone can view; super_admin and admin can correct.
+router.get("/members", [requireAuth, canViewBoard, validate(adminMemberListSchema), ChapterAdminController.listMembers]);
+router.get("/members/:id", [requireAuth, canViewBoard, validate(memberIdSchema), ChapterAdminController.getMember]);
+router.patch("/members/:id", [
+  requireAuth,
+  adminOrSuperAdmin,
+  validate(adminMemberUpdateSchema),
+  ChapterAdminController.updateMember,
+]);
+router.patch("/members/:id/status", [
+  requireAuth,
+  adminOrSuperAdmin,
+  validate(adminMemberStatusSchema),
+  ChapterAdminController.setMemberStatus,
 ]);
 
 router.get("/achievements", [

@@ -2,6 +2,9 @@ import { asyncHandler } from "@/helpers/async-handler";
 import { getActor } from "@/helpers/request-actor";
 import AchievementService from "@/service/achievement";
 import ChapterRequestService from "@/service/chapter-request";
+import MemberAdminService from "@/service/member-admin";
+import MembershipOverviewService from "@/service/membership-overview";
+import type { AmbassadorStatus } from "@/models/ambassador";
 import PortalAccountService from "@/service/portal-account";
 import RecruitmentService from "@/service/recruitment";
 
@@ -51,6 +54,44 @@ const ChapterAdminController = {
   rejectChapterRequest: asyncHandler(async (req, res) => {
     await ChapterRequestService.reject(req.params.id as string, req.body.note, getActor(req));
     res.status(200).json({ message: "Chapter request rejected", data: null });
+  }),
+
+  /** Membership numbers for the admin dashboard. */
+  overview: asyncHandler(async (_req, res) => {
+    const data = await MembershipOverviewService.get();
+    res.status(200).json({ message: "Overview fetched successfully", data });
+  }),
+
+  // Member directory
+  listMembers: asyncHandler(async (req, res) => {
+    const q = req.query as Record<string, string | number | undefined>;
+    const data = await MemberAdminService.list({
+      search: q.search as string | undefined,
+      churchId: q.churchId as string | undefined,
+      chapterId: q.chapterId as string | undefined,
+      rankId: q.rankId as string | undefined,
+      status: q.status as AmbassadorStatus | undefined,
+      page: q.page ? Number(q.page) : undefined,
+      limit: q.limit ? Number(q.limit) : undefined,
+    });
+    res.status(200).json({ message: "Members fetched successfully", data });
+  }),
+  getMember: asyncHandler(async (req, res) => {
+    const data = await MemberAdminService.get(req.params.id as string);
+    res.status(200).json({ message: "Member fetched successfully", data });
+  }),
+  updateMember: asyncHandler(async (req, res) => {
+    const data = await MemberAdminService.update(req.params.id as string, req.body, getActor(req));
+    res.status(200).json({ message: "Member updated", data });
+  }),
+  setMemberStatus: asyncHandler(async (req, res) => {
+    const data = await MemberAdminService.setStatus(
+      req.params.id as string,
+      req.body.status,
+      req.body.reason ?? null,
+      getActor(req),
+    );
+    res.status(200).json({ message: "Member status updated", data });
   }),
 
   // Achievements (read only)

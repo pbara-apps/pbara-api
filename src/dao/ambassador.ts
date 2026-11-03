@@ -44,6 +44,20 @@ const AmbassadorDao = {
   async findByIds(ids: string[]) {
     return await AmbassadorModel.find({ _id: { $in: ids } }).exec();
   },
+  /** One page of members plus the total count (for large association-wide lists). */
+  async listPaged(filter: AmbassadorFilter, page: number, limit: number) {
+    const query = buildQuery(filter);
+    const [items, total] = await Promise.all([
+      AmbassadorModel.find(query)
+        .populate(POPULATE)
+        .sort({ fullName: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec(),
+      AmbassadorModel.countDocuments(query).exec(),
+    ]);
+    return { items, total };
+  },
   async list(filter: AmbassadorFilter, sort: Record<string, 1 | -1> = { fullName: 1 }) {
     return await AmbassadorModel.find(buildQuery(filter))
       .populate(POPULATE)
@@ -107,6 +121,20 @@ const AmbassadorDao = {
         { path: "rank", select: "name" },
       ])
       .exec();
+  },
+  /** Active members per rank across the whole association. */
+  async countAllActiveByRank() {
+    return await AmbassadorModel.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+      { $match: { status: "active" } },
+      { $group: { _id: "$rank", count: { $sum: 1 } } },
+    ]);
+  },
+  /** Members approved per month since `from`, as [{ year, month, count }]. */
+  async countApprovedByMonth(from: Date) {
+    return await AmbassadorModel.aggregate<{ _id: { year: number; month: number }; count: number }>([
+      { $match: { approvedAt: { $gte: from } } },
+      { $group: { _id: { year: { $year: "$approvedAt" }, month: { $month: "$approvedAt" } }, count: { $sum: 1 } } },
+    ]);
   },
   async countChangesRequested(chapterIds: string[]) {
     return await AmbassadorModel.countDocuments({

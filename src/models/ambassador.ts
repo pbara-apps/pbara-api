@@ -72,6 +72,8 @@ const ambassadorSchema = new mongoose.Schema(
       default: "pending",
     },
     changesRequested: { type: Boolean, default: false },
+    /** Why a member was set to inactive (e.g. "Left the church", "Relocated"). */
+    statusReason: { type: String, default: null },
     /** Rejection reason or "changes needed" note from the reviewer. */
     reviewNote: { type: String, default: null },
     submittedBy: {

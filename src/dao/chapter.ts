@@ -61,6 +61,9 @@ const ChapterDao = {
   async deleteById(id: string) {
     return await ChapterModel.findByIdAndDelete(id).exec();
   },
+  async countByStatus(status: (typeof CHAPTER_STATUSES)[number]) {
+    return await ChapterModel.countDocuments({ status }).exec();
+  },
   async updateName(id: string, name: string) {
     return await ChapterModel.findByIdAndUpdate(id, { name }, { returnDocument: "after" }).exec();
   },

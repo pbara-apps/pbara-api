@@ -20,7 +20,7 @@ const DirectorDeskDao = {
     directorDesk: DirectorDeskTypes,
   ) {
     return await DirectorDeskModel.findByIdAndUpdate(directorId, directorDesk, {
-      new: true,
+      returnDocument: "after",
     });
   },
 };

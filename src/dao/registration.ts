@@ -59,7 +59,7 @@ const RegistrationDao = {
     id: string,
     data: { status: "verified" | "rejected"; adminNote?: string | null },
   ) {
-    return await RegistrationModel.findByIdAndUpdate(id, data, { new: true })
+    return await RegistrationModel.findByIdAndUpdate(id, data, { returnDocument: "after" })
       .populate("programId", "title slug category amount isActive")
       .populate("entries.rank", "name category")
       .populate("entries.church", "name chapter")

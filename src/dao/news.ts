@@ -57,7 +57,7 @@ const NewsDao = {
     return await NewsModel.findOne({ slug }).exec();
   },
   async update(id: string, data: NewsPayload) {
-    return await NewsModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    return await NewsModel.findByIdAndUpdate(id, data, { returnDocument: "after" }).exec();
   },
   async delete(id: string) {
     return await NewsModel.findByIdAndDelete(id).exec();

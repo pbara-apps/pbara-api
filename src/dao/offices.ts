@@ -19,7 +19,7 @@ const OfficeDao = {
     return await OfficeModel.findById(id).exec();
   },
   async updateOffice(id: string, office: Office) {
-    return await OfficeModel.findByIdAndUpdate(id, office, { new: true }).exec();
+    return await OfficeModel.findByIdAndUpdate(id, office, { returnDocument: "after" }).exec();
   },
   async deleteOffice(id: string) {
     return await OfficeModel.findByIdAndDelete(id).exec();

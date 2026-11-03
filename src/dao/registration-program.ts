@@ -39,14 +39,14 @@ const RegistrationProgramDao = {
   },
   async update(id: string, data: ProgramPayload) {
     return await RegistrationProgramModel.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
     }).exec();
   },
   async deactivate(id: string) {
     return await RegistrationProgramModel.findByIdAndUpdate(
       id,
       { isActive: false },
-      { new: true },
+      { returnDocument: "after" },
     ).exec();
   },
 };

@@ -19,7 +19,7 @@ const PatronDao = {
     return await PatronModel.findById(id).exec();
   },
   async update(id: string, patron: Partial<PatronTypes>) {
-    return await PatronModel.findByIdAndUpdate(id, patron, { new: true }).exec();
+    return await PatronModel.findByIdAndUpdate(id, patron, { returnDocument: "after" }).exec();
   },
   async delete(id: string) {
     return await PatronModel.findByIdAndDelete(id).exec();

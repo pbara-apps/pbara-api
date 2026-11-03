@@ -30,7 +30,7 @@ const MessageDao = {
         read_at: new Date(),
         read_by: readBy ?? null,
       },
-      { new: true },
+      { returnDocument: "after" },
     ).exec();
   },
   async markManyRead(ids: string[], readBy?: string) {

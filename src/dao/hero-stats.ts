@@ -14,7 +14,7 @@ const HeroStatsDao = {
     return await HeroStatsModel.findOneAndUpdate(
       {},
       { stats },
-      { new: true, upsert: true },
+      { returnDocument: "after", upsert: true },
     ).exec();
   },
 };

@@ -24,7 +24,7 @@ const RankDao = {
     return await RankModel.findOne({ name }).exec();
   },
   async updateRank(id: string, rank: Partial<RankTypes>) {
-    return await RankModel.findByIdAndUpdate(id, rank, { new: true }).exec();
+    return await RankModel.findByIdAndUpdate(id, rank, { returnDocument: "after" }).exec();
   },
   async deleteRank(id: string) {
     return await RankModel.findByIdAndDelete(id).exec();

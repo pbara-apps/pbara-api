@@ -16,7 +16,7 @@ const NewsletterDao = {
     return await NewsletterModel.create(data);
   },
   async update(id: string, data: NewsletterPayload) {
-    return await NewsletterModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    return await NewsletterModel.findByIdAndUpdate(id, data, { returnDocument: "after" }).exec();
   },
   async findRecent(limit = 20) {
     return await NewsletterModel.find().sort({ createdAt: -1 }).limit(limit).exec();

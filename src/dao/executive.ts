@@ -28,7 +28,7 @@ const ExecutiveDao = {
       .exec();
   },
   async updateExecutive(id: string, officer: Partial<ExecutiveTypes>) {
-    return await ExecutiveModel.findByIdAndUpdate(id, officer, { new: true })
+    return await ExecutiveModel.findByIdAndUpdate(id, officer, { returnDocument: "after" })
       .populate([...POPULATE_FIELDS])
       .exec();
   },

@@ -5,7 +5,7 @@ const RegistrationCounterDao = {
     const updated = await RegistrationCounterModel.findOneAndUpdate(
       { programId },
       { $inc: { seq: count } },
-      { new: true, upsert: true, setDefaultsOnInsert: true },
+      { returnDocument: "after", upsert: true, setDefaultsOnInsert: true },
     ).exec();
 
     const end = updated?.seq ?? count;

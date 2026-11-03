@@ -38,7 +38,7 @@ const EventDao = {
     return await EventModel.findById(id).populate(PROGRAM_POPULATE).exec();
   },
   async update(id: string, data: EventPayload) {
-    return await EventModel.findByIdAndUpdate(id, data, { new: true })
+    return await EventModel.findByIdAndUpdate(id, data, { returnDocument: "after" })
       .populate(PROGRAM_POPULATE)
       .exec();
   },

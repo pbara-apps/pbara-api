@@ -16,14 +16,14 @@ const SubscriberDao = {
           unsubscribe_token: newUnsubscribeToken(),
         },
       },
-      { new: true, upsert: true },
+      { returnDocument: "after", upsert: true },
     ).exec();
   },
   async unsubscribeByToken(token: string) {
     return await SubscriberModel.findOneAndUpdate(
       { unsubscribe_token: token },
       { $set: { is_active: false, unsubscribed_at: new Date() } },
-      { new: true },
+      { returnDocument: "after" },
     ).exec();
   },
   /** Active subscribers' email + token. Backfills tokens on older records. */

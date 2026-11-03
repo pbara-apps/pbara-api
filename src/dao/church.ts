@@ -20,7 +20,7 @@ const ChurchDao = {
     return await ChurchModel.findById(id).exec();
   },
   async updateChurch(id: string, church: Partial<ChurchTypes>) {
-    return await ChurchModel.findByIdAndUpdate(id, church, { new: true }).exec();
+    return await ChurchModel.findByIdAndUpdate(id, church, { returnDocument: "after" }).exec();
   },
   async deleteChurch(id: string) {
     return await ChurchModel.findByIdAndDelete(id).exec();

@@ -31,7 +31,7 @@ const GalleryDao = {
     return await GalleryModel.findById(id).exec();
   },
   async update(id: string, data: GalleryPayload) {
-    return await GalleryModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    return await GalleryModel.findByIdAndUpdate(id, data, { returnDocument: "after" }).exec();
   },
   async delete(id: string) {
     return await GalleryModel.findByIdAndDelete(id).exec();

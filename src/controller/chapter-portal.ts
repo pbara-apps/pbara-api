@@ -5,6 +5,7 @@ import ChapterService from "@/service/chapter";
 import ChapterRequestService from "@/service/chapter-request";
 import MemberService, { type MemberView } from "@/service/member";
 import PortalAccountService from "@/service/portal-account";
+import PortalRegistrationService from "@/service/portal-registration";
 import UploadService from "@/service/upload";
 
 /** Chapter portal: chapters, members, dashboard and (counsellor only) officers. */
@@ -29,6 +30,34 @@ const ChapterPortalController = {
   cancelChapterRequest: asyncHandler(async (req, res) => {
     await ChapterRequestService.cancelRequest(getPortalUser(req), req.params.id as string);
     res.status(200).json({ message: "Chapter request withdrawn", data: null });
+  }),
+
+  // Program registration
+  listPrograms: asyncHandler(async (_req, res) => {
+    const data = await PortalRegistrationService.listOpenPrograms();
+    res.status(200).json({ message: "Programs fetched successfully", data });
+  }),
+
+  registeredMembers: asyncHandler(async (req, res) => {
+    const data = await PortalRegistrationService.registeredMemberIds(
+      getPortalUser(req),
+      req.params.id as string,
+      req.query.chapterId as string,
+    );
+    res.status(200).json({ message: "Registered members fetched", data });
+  }),
+
+  register: asyncHandler(async (req, res) => {
+    const data = await PortalRegistrationService.register(getPortalUser(req), req.body);
+    res.status(201).json({ message: "Registration submitted for payment verification", data });
+  }),
+
+  listRegistrations: asyncHandler(async (req, res) => {
+    const data = await PortalRegistrationService.listForChapters(
+      getPortalUser(req),
+      req.query.chapterId as string | undefined,
+    );
+    res.status(200).json({ message: "Registrations fetched successfully", data });
   }),
 
   // Dashboard

@@ -104,6 +104,49 @@ const RegistrationDao = {
 
     return await RegistrationDao.findById(id);
   },
+  /** Member ids already registered (not rejected) for a program, out of `ambassadorIds`. */
+  async findRegisteredAmbassadorIds(programId: string, ambassadorIds: string[]) {
+    const regs = await RegistrationModel.find({
+      programId,
+      status: { $ne: "rejected" },
+      "entries.ambassador": { $in: ambassadorIds },
+    })
+      .select("entries.ambassador")
+      .lean()
+      .exec();
+    const wanted = new Set(ambassadorIds);
+    return new Set(
+      regs.flatMap((r) => r.entries.map((e) => String(e.ambassador))).filter((id) => wanted.has(id)),
+    );
+  },
+  /** Registrations that include members from the given chapters, newest first. */
+  async findForChapters(chapterIds: string[]) {
+    return await RegistrationModel.find({ "entries.chapter": { $in: chapterIds } })
+      .populate("programId", "title slug category amount")
+      .populate("entries.rank", "name")
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean()
+      .exec();
+  },
+  /** Entries for these members, with program title (to describe them in notifications). */
+  async findEntriesForAmbassadors(ambassadorIds: string[]) {
+    return await RegistrationModel.find({ "entries.ambassador": { $in: ambassadorIds } })
+      .populate("programId", "title")
+      .lean()
+      .exec();
+  },
+  /** Sets the membership flag on every entry for these members. */
+  async setMembershipForAmbassadors(
+    ambassadorIds: string[],
+    membership: "member" | "pending" | "non_member",
+  ) {
+    return await RegistrationModel.updateMany(
+      { "entries.ambassador": { $in: ambassadorIds } },
+      { $set: { "entries.$[entry].membership": membership } },
+      { arrayFilters: [{ "entry.ambassador": { $in: ambassadorIds } }] },
+    ).exec();
+  },
   async countPending() {
     return await RegistrationModel.countDocuments({ status: "pending" }).exec();
   },

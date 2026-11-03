@@ -185,3 +185,23 @@ export const UPLOAD_PURPOSES = ["photo", "rank-proof", "achievement-proof", "pay
 export const uploadPurposeSchema = z.object({
   params: z.object({ purpose: z.enum(UPLOAD_PURPOSES) }),
 });
+
+// ─── Program registration from the portal ──────────────────────────────────
+
+export const registeredMembersSchema = z.object({
+  params: idParam,
+  query: z.object({ chapterId: objectId }),
+});
+
+export const portalRegistrationSchema = z.object({
+  body: z.object({
+    programId: objectId,
+    chapterId: objectId,
+    memberIds: z.array(objectId).min(1, "Pick at least one member").max(200),
+    proofOfPaymentUrl: z.string().trim().url("Upload the proof of payment"),
+  }),
+});
+
+export const portalRegistrationListSchema = z.object({
+  query: z.object({ chapterId: objectId.optional() }),
+});

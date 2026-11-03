@@ -19,6 +19,9 @@ import {
   memberIdSchema,
   officerIdSchema,
   portalLoginSchema,
+  portalRegistrationListSchema,
+  portalRegistrationSchema,
+  registeredMembersSchema,
   rankHistorySchema,
   uploadPurposeSchema,
   updateMemberSchema,
@@ -72,6 +75,11 @@ portal.post("/upload/:purpose", [
   ChapterPortalController.upload,
 ]);
 portal.put("/members/:id/rank-history", [validate(rankHistorySchema), ChapterPortalController.setRankHistory]);
+
+portal.get("/programs", ChapterPortalController.listPrograms);
+portal.get("/programs/:id/registered", [validate(registeredMembersSchema), ChapterPortalController.registeredMembers]);
+portal.get("/registrations", [validate(portalRegistrationListSchema), ChapterPortalController.listRegistrations]);
+portal.post("/registrations", [validate(portalRegistrationSchema), ChapterPortalController.register]);
 
 // 4. Counsellor only: chapter presidents and secretaries.
 const counsellorOnly = requirePortalRole(["counsellor"]);

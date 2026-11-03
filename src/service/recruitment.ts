@@ -1,5 +1,6 @@
 import AmbassadorDao from "@/dao/ambassador";
 import CounterDao from "@/dao/counter";
+import RegistrationDao from "@/dao/registration";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
 import { formatMemberId, isSameDay } from "@/helpers/member-utils";
 import NotificationService from "@/service/notification";
@@ -93,6 +94,30 @@ async function notifyChapters(
   }
 }
 
+/**
+ * After members are rejected: flag their program registrations as
+ * "non_member" and send admins one notification per affected entry.
+ */
+async function flagRegistrationsAsNonMember(memberIds: string[]) {
+  if (memberIds.length === 0) return;
+  const registrations = await RegistrationDao.findEntriesForAmbassadors(memberIds);
+  if (registrations.length === 0) return;
+
+  await RegistrationDao.setMembershipForAmbassadors(memberIds, "non_member");
+  const rejected = new Set(memberIds);
+  for (const reg of registrations) {
+    const program = (reg.programId as { title?: string })?.title ?? "a program";
+    for (const entry of reg.entries.filter((e) => rejected.has(String(e.ambassador)))) {
+      await NotificationService.notifyAdmins({
+        type: "registration.non_member",
+        title: "Registered person is not a member",
+        message: `${entry.name} (${entry.registrationCode}) is registered for ${program}, but their membership was not approved. The registration is now marked non-member.`,
+        link: "/admin/registrations",
+      });
+    }
+  }
+}
+
 const RecruitmentService = {
   /** Members waiting for review (or rejected), each with its duplicate matches. */
   async listRequests(query: { status?: "pending" | "rejected"; search?: string; churchId?: string }) {
@@ -145,6 +170,11 @@ const RecruitmentService = {
         detail: "Approved as association members",
       });
     }
+    // Program registrations made while they were pending now count as members.
+    await RegistrationDao.setMembershipForAmbassadors(
+      approvedMembers.map((m) => String((m as { _id?: unknown })._id)),
+      "member",
+    );
     await notifyChapters(approvedMembers, (names) => ({
       type: "members.approved",
       title: "Members approved",
@@ -156,9 +186,11 @@ const RecruitmentService = {
 
   /**
    * Rejects pending members with a reason the chapter can see.
+   * Any program registrations they already have stay, but are flagged
+   * "non_member", and admins are told so they can follow up.
    */
   async reject(ids: string[], reason: string, actor: AuditActor) {
-    return await RecruitmentService.review(ids, actor, {
+    const result = await RecruitmentService.review(ids, actor, {
       update: { status: "rejected", changesRequested: false, reviewNote: reason },
       detail: `Rejected: ${reason}`,
       notify: (names) => ({
@@ -168,6 +200,8 @@ const RecruitmentService = {
         link: "/chapter/members?view=awaiting",
       }),
     });
+    await flagRegistrationsAsNonMember(result.updatedIds);
+    return result;
   },
 
   /** Sends pending members back to the chapter to fix something; they stay pending. */
@@ -216,6 +250,7 @@ const RecruitmentService = {
     return {
       updated: pending.length,
       skipped: ids.length - pending.length,
+      updatedIds: pending.map((m) => String(m._id)),
     };
   },
 

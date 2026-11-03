@@ -46,6 +46,19 @@ const NotificationService = {
     }
   },
 
+  /** Every super admin and admin (e.g. registration issues they should look at). */
+  async notifyAdmins(content: NotificationContent) {
+    try {
+      const ids = [
+        ...(await ExecutiveDao.findIdsByRole("super_admin")),
+        ...(await ExecutiveDao.findIdsByRole("admin")),
+      ];
+      await send(ids.map((id) => ({ type: "executive", id })), content);
+    } catch (error) {
+      console.error("[Notification] admin lookup failed:", error);
+    }
+  },
+
   /** Presidents and secretaries of the chapters, plus their church counsellors. */
   async notifyChapterOfficers(chapterIds: string[], churchIds: string[], content: NotificationContent) {
     try {

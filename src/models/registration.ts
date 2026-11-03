@@ -18,6 +18,20 @@ const registrationEntrySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    // ── Set only for registrations made from the chapter portal ──
+    /** The member record this entry is for. */
+    ambassador: { type: mongoose.Schema.Types.ObjectId, ref: "Ambassador", default: null },
+    chapter: { type: mongoose.Schema.Types.ObjectId, ref: "Chapter", default: null },
+    /**
+     * Membership when registered: "member" (approved), "pending" (awaiting
+     * approval) or "non_member" (their membership was later rejected — the
+     * registration stays, but is flagged).
+     */
+    membership: {
+      type: String,
+      enum: ["member", "pending", "non_member", null],
+      default: null,
+    },
   },
   { _id: false },
 );
@@ -52,12 +66,17 @@ const registrationSchema = new mongoose.Schema(
       default: "pending",
     },
     adminNote: { type: String, default: null },
+    /** "public" = website form; "chapter_portal" = registered by a chapter officer. */
+    source: { type: String, enum: ["public", "chapter_portal"], default: "public" },
+    submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", default: null },
   },
   { timestamps: true },
 );
 
 registrationSchema.index({ programId: 1, status: 1 });
 registrationSchema.index({ createdAt: -1 });
+registrationSchema.index({ programId: 1, "entries.ambassador": 1 });
+registrationSchema.index({ "entries.chapter": 1, createdAt: -1 });
 registrationSchema.index(
   { "entries.registrationCode": 1 },
   { unique: true, sparse: true },

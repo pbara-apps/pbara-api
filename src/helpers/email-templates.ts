@@ -92,7 +92,7 @@ export function unsubscribePage(ok: boolean) {
 </body></html>`;
 }
 
-const PORTAL_ROLE_TITLES: Record<string, string> = {
+export const PORTAL_ROLE_TITLES: Record<string, string> = {
   counsellor: "Counsellor",
   president: "Chapter President",
   secretary: "Chapter Secretary",

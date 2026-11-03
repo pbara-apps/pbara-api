@@ -87,6 +87,9 @@ export interface RegistrationEntryTypes {
   rank: string;
   church: string;
   registrationCode?: string;
+  ambassador?: string | null;
+  chapter?: string | null;
+  membership?: "member" | "pending" | "non_member" | null;
 }
 
 export interface RegistrationTypes {
@@ -98,4 +101,6 @@ export interface RegistrationTypes {
   entries: RegistrationEntryTypes[];
   status?: "pending" | "verified" | "rejected";
   adminNote?: string | null;
+  source?: "public" | "chapter_portal";
+  submittedBy?: string | null;
 }

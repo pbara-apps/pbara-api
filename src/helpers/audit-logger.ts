@@ -10,7 +10,9 @@ export type AuditEntityType =
   | "office"
   | "patron"
   | "program"
-  | "registration";
+  | "registration"
+  | "member"
+  | "portal_account";
 
 export type AuditActor = {
   id?: string;

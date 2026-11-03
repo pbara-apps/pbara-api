@@ -1,0 +1,38 @@
+import mongoose from "mongoose";
+
+/**
+ * Chapter — a group of ambassadors inside a church.
+ *
+ * Every church has one default chapter (created with the church).
+ * Extra chapters are requested by the church counsellor and approved by a
+ * super_admin, so a chapter can be `pending` or `rejected` before it is `active`.
+ */
+export const CHAPTER_STATUSES = ["pending", "active", "rejected"] as const;
+
+const chapterSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    church: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Church",
+      required: true,
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: CHAPTER_STATUSES,
+      default: "active",
+    },
+    /** The church's first chapter. It is renamed with the church and can't be removed. */
+    isDefault: { type: Boolean, default: false },
+    reviewNote: { type: String, default: null },
+  },
+  { timestamps: true },
+);
+
+chapterSchema.index({ church: 1, name: 1 }, { unique: true });
+chapterSchema.index({ church: 1, status: 1 });
+
+const ChapterModel = mongoose.model("Chapter", chapterSchema);
+
+export default ChapterModel;

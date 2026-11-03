@@ -16,7 +16,7 @@ const RankDao = {
   },
   async findPublic() {
     return await RankModel.find()
-      .select("name description category image order")
+      .select("name description category image order maxAge")
       .sort(RANK_SORT)
       .exec();
   },
@@ -60,6 +60,9 @@ const RankDao = {
   },
   async deleteMany(ids: string[]) {
     return await RankModel.deleteMany({ _id: { $in: ids } }).exec();
+  },
+  async countByIds(ids: string[]) {
+    return await RankModel.countDocuments({ _id: { $in: ids } }).exec();
   },
   async countAll() {
     return await RankModel.countDocuments().exec();

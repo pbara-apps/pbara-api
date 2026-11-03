@@ -18,7 +18,7 @@ export const isMailConfigured = () => Boolean(process.env.RESEND_API_KEY);
 export const mailConfig = {
   // Must be an address on a domain verified in Resend.
   get from() {
-    return process.env.MAIL_FROM || "PBA-RA <onboarding@resend.dev>";
+    return process.env.MAIL_FROM || "PBARA <onboarding@resend.dev>";
   },
   get replyTo() {
     return process.env.MAIL_REPLY_TO || undefined;
@@ -26,6 +26,10 @@ export const mailConfig = {
   // Public URL of this API, used for unsubscribe links.
   get apiUrl() {
     return (process.env.API_PUBLIC_URL || "http://localhost:3004").replace(/\/$/, "");
+  },
+  // Chapter portal app URL, used for the login link in account emails.
+  get portalUrl() {
+    return (process.env.PORTAL_URL || "http://localhost:5170").replace(/\/$/, "");
   },
   // Public website URL, used for links inside emails.
   get siteUrl() {

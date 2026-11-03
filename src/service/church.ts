@@ -1,12 +1,52 @@
+import AmbassadorDao from "@/dao/ambassador";
+import ChapterDao from "@/dao/chapter";
 import ChurchDao from "@/dao/church";
+import PortalUserDao from "@/dao/portal-user";
+import { httpError } from "@/helpers/http-error";
+import ChapterService from "@/service/chapter";
 import { ChurchTypes } from "@/types/_types";
+
+/**
+ * Church service.
+ *
+ * Chapter rules applied here:
+ * - Every new church gets its default chapter straight away.
+ * - Renaming the church's chapter name renames its default chapter.
+ * - A church that has members can't be deleted (their records would be lost).
+ */
+
+async function getChurchOrThrow(id: string) {
+  const church = await ChurchDao.findById(id);
+  if (!church) throw httpError(404, "Church not found");
+  return church;
+}
+
+/** Deletes a church and its chapters and logins — only if it has no members. */
+async function deleteChurchSafely(id: string) {
+  const church = await getChurchOrThrow(id);
+  if ((await AmbassadorDao.countByChurch(id)) > 0) {
+    throw httpError(
+      409,
+      `${church.name} has members, so it can't be deleted. Set it to inactive instead.`,
+    );
+  }
+  await ChapterDao.deleteByChurch(id);
+  await PortalUserDao.deactivateByChurch(id);
+  return await ChurchDao.deleteChurch(id);
+}
 
 const ChurchService = {
   async createChurch(church: ChurchTypes) {
-    return await ChurchDao.addChurch(church);
+    const created = await ChurchDao.addChurch(church);
+    await ChapterService.ensureDefaultChapter(created);
+    return created;
   },
   async createBulkChurch(church: ChurchTypes) {
-    return await ChurchDao.addManyChurch(church);
+    const created = await ChurchDao.addManyChurch(church);
+    for (const item of created) {
+      await ChapterService.ensureDefaultChapter(item);
+    }
+    return created;
   },
   async getAllChurch() {
     return await ChurchDao.getAllChurch();
@@ -18,25 +58,21 @@ const ChurchService = {
     return await ChurchDao.findById(id);
   },
   async updateChurch(id: string, church: Partial<ChurchTypes>) {
-    const existing = await ChurchDao.findById(id);
-    if (!existing) {
-      const err = new Error("Chapter not found") as Error & { status?: number };
-      err.status = 404;
-      throw err;
+    await getChurchOrThrow(id);
+    const updated = await ChurchDao.updateChurch(id, church);
+    if (church.chapter?.trim()) {
+      await ChapterService.syncDefaultChapterName(id, church.chapter.trim());
     }
-    return await ChurchDao.updateChurch(id, church);
+    return updated;
   },
   async deleteChurch(id: string) {
-    const existing = await ChurchDao.findById(id);
-    if (!existing) {
-      const err = new Error("Chapter not found") as Error & { status?: number };
-      err.status = 404;
-      throw err;
-    }
-    return await ChurchDao.deleteChurch(id);
+    return await deleteChurchSafely(id);
   },
+  /** Deletes one by one so a church with members stops the batch with a clear message. */
   async deleteChurches(ids: string[]) {
-    return await ChurchDao.deleteMany(ids);
+    for (const id of ids) {
+      await deleteChurchSafely(id);
+    }
   },
 };
 

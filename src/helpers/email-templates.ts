@@ -91,3 +91,42 @@ export function unsubscribePage(ok: boolean) {
   </div>
 </body></html>`;
 }
+
+const PORTAL_ROLE_TITLES: Record<string, string> = {
+  counsellor: "Counsellor",
+  president: "Chapter President",
+  secretary: "Chapter Secretary",
+};
+
+/**
+ * Sent when a chapter portal account is created or its password is reset.
+ * Contains the one-time password; the user must change it on first login.
+ */
+export function portalAccountEmail(opts: {
+  name: string;
+  email: string;
+  role: string;
+  placeName: string;
+  tempPassword: string;
+}) {
+  const roleTitle = PORTAL_ROLE_TITLES[opts.role] ?? "Officer";
+  const loginUrl = `${mailConfig.portalUrl}/chapter/login`;
+  const subject = "Your RA Chapter Portal login";
+  const html = layout({
+    title: subject,
+    bodyHtml: `
+      <h1 style="margin:0 0 16px;font-size:22px;color:${PRIMARY}">Welcome, ${escapeHtml(opts.name)}</h1>
+      <p style="margin:0 0 12px">A Chapter Portal account has been set up for you as
+      <strong>${escapeHtml(roleTitle)}</strong> of <strong>${escapeHtml(opts.placeName)}</strong>.</p>
+      <p style="margin:0 0 8px">Use these details to sign in:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:#f8fafc;border-radius:8px;padding:12px 16px">
+        <tr><td style="padding:4px 12px 4px 0;color:#64748b">Email</td><td style="padding:4px 0"><strong>${escapeHtml(opts.email)}</strong></td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#64748b">One-time password</td><td style="padding:4px 0;font-family:monospace;font-size:16px"><strong>${escapeHtml(opts.tempPassword)}</strong></td></tr>
+      </table>
+      <p style="margin:0 0 24px">You will be asked to choose your own password the first time you sign in.</p>
+      <a href="${loginUrl}" style="display:inline-block;background:${GOLD};color:#0f172a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">Sign in to the Chapter Portal</a>
+      <p style="margin:24px 0 0;font-size:13px;color:#64748b">If you weren't expecting this email, you can ignore it.</p>`,
+  });
+  const text = `Welcome, ${opts.name}.\n\nA Chapter Portal account has been set up for you as ${roleTitle} of ${opts.placeName}.\n\nEmail: ${opts.email}\nOne-time password: ${opts.tempPassword}\n\nSign in at ${loginUrl}. You will be asked to choose your own password the first time you sign in.`;
+  return { subject, html, text };
+}

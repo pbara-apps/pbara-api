@@ -31,17 +31,18 @@ router.patch("/update/:id", [
   validate(updateChurchSchema),
   ChurchController.updateChurch,
 ]);
-router.delete("/delete/:id", [
-  requireAuth,
-  requireRole(["super_admin", "admin", "editor"]),
-  validate(idParamSchema),
-  ChurchController.deleteChurch,
-]);
+// Must come before "/delete/:id", otherwise "bulk" is treated as an id.
 router.delete("/delete/bulk", [
   requireAuth,
   requireRole(["super_admin", "admin", "editor"]),
   validate(bulkDeleteSchema),
   ChurchController.deleteChurchesBulk,
+]);
+router.delete("/delete/:id", [
+  requireAuth,
+  requireRole(["super_admin", "admin", "editor"]),
+  validate(idParamSchema),
+  ChurchController.deleteChurch,
 ]);
 router.get("/", [requireAuth, ChurchController.getAllChurch]);
 

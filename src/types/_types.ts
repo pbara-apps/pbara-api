@@ -45,6 +45,8 @@ export interface RankTypes {
   image?: string | null;
   /** Position in the rank ladder (1 = lowest). Assigned automatically when omitted. */
   order?: number | null;
+  /** Oldest normal age for this rank; older members get a soft warning. */
+  maxAge?: number | null;
 }
 
 export interface DirectorDeskTypes {

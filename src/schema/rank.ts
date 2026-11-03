@@ -9,6 +9,8 @@ const rankBody = z.object({
   image: z.string().optional().nullable(),
   /** Position in the rank ladder (1 = lowest). Optional: new ranks go to the end. */
   order: z.number().int().min(1).optional(),
+  /** Oldest normal age for this rank (soft warning only). Null clears it. */
+  maxAge: z.number().int().min(10).max(99).optional().nullable(),
 });
 
 export const createRankSchema = z.object({

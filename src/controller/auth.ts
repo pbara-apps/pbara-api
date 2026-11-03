@@ -1,8 +1,22 @@
+import { asyncHandler } from "@/helpers/async-handler";
+import PasswordResetService from "@/service/password-reset";
 import { getAuthUser } from "@/helpers/auth-user";
 import AuthService from "@/service/auth";
 import { NextFunction, Request, Response } from "express";
 
 const AuthController = {
+  /** Always answers the same way, whether or not the email has an account. */
+  forgotPassword: asyncHandler(async (req, res) => {
+    await PasswordResetService.request(req.body.email);
+    res.status(200).json({
+      message: "If that email belongs to an admin account, a reset link has been sent.",
+      data: null,
+    });
+  }),
+  resetPassword: asyncHandler(async (req, res) => {
+    await PasswordResetService.reset(req.body.token, req.body.password);
+    res.status(200).json({ message: "Password changed. You can now sign in.", data: null });
+  }),
   async login(req: Request, res: Response, next: NextFunction) {
     const loginBody = req.body;
     try {

@@ -130,3 +130,19 @@ export function portalAccountEmail(opts: {
   const text = `Welcome, ${opts.name}.\n\nA Chapter Portal account has been set up for you as ${roleTitle} of ${opts.placeName}.\n\nEmail: ${opts.email}\nOne-time password: ${opts.tempPassword}\n\nSign in at ${loginUrl}. You will be asked to choose your own password the first time you sign in.`;
   return { subject, html, text };
 }
+
+/** Admin "forgot password" email with a one-time reset link. */
+export function passwordResetEmail(opts: { name: string; link: string; minutes: number }) {
+  const subject = "Reset your PBARA admin password";
+  const html = layout({
+    title: subject,
+    bodyHtml: `
+      <h1 style="margin:0 0 16px;font-size:22px;color:${PRIMARY}">Reset your password</h1>
+      <p style="margin:0 0 12px">Hello ${escapeHtml(opts.name)}, we received a request to reset the password for your admin portal account.</p>
+      <p style="margin:0 0 24px">This link works once and expires in ${opts.minutes} minutes.</p>
+      <a href="${opts.link}" style="display:inline-block;background:${GOLD};color:#0f172a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">Choose a new password</a>
+      <p style="margin:24px 0 0;font-size:13px;color:#64748b">If you didn't ask for this, you can ignore this email — your password won't change.</p>`,
+  });
+  const text = `Hello ${opts.name},\n\nReset your admin portal password here (works once, expires in ${opts.minutes} minutes):\n${opts.link}\n\nIf you didn't ask for this, ignore this email.`;
+  return { subject, html, text };
+}

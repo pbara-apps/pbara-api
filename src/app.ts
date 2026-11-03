@@ -49,6 +49,8 @@ app.use(
 );
 app.use("/auth/login", authLimiter);
 app.use("/chapter-portal/auth/login", authLimiter);
+app.use("/auth/forgot-password", authLimiter);
+app.use("/auth/reset-password", authLimiter);
 app.use("/message/public/create", messageLimiter);
 app.use("/subscriber/public/subscribe", messageLimiter);
 

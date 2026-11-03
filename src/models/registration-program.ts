@@ -24,7 +24,8 @@ const registrationProgramSchema = new mongoose.Schema(
     description: { type: String, default: null },
     flyerImageUrl: { type: String, default: null },
     amount: { type: Number, required: true },
-    bankDetails: { type: bankDetailsSchema, required: true },
+    /** Legacy: payments now use the association account (see PaymentAccountService). */
+    bankDetails: { type: bankDetailsSchema, default: null },
     registrationMode: {
       type: String,
       required: true,

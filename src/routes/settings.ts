@@ -3,11 +3,18 @@ import requireAuth from "@/middleware/requireAuth";
 import requireRole from "@/middleware/requireRole";
 import requireSuperAdmin from "@/middleware/requireSuperAdmin";
 import validate from "@/middleware/validate";
-import { updateExecutiveRoleSchema } from "@/schema/settings";
+import { paymentAccountSchema, updateExecutiveRoleSchema } from "@/schema/settings";
 import express from "express";
 
 const router = express.Router();
 
+router.get("/payment-account", SettingsController.getPaymentAccount);
+router.put("/payment-account", [
+  requireAuth,
+  requireSuperAdmin,
+  validate(paymentAccountSchema),
+  SettingsController.updatePaymentAccount,
+]);
 router.get("/executives", [
   requireAuth,
   requireRole(["super_admin", "admin", "editor"]),

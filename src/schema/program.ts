@@ -32,7 +32,8 @@ const programBodyBase = z.object({
   description: z.string().optional().nullable(),
   flyerImageUrl: z.string().optional().nullable(),
   amount: z.number().positive(),
-  bankDetails: bankDetailsSchema,
+  // Legacy: payments use the association account set in Settings.
+  bankDetails: bankDetailsSchema.optional().nullable(),
   registrationMode: z.enum(["single", "bulk", "both"]),
   registrationDeadline: isoDate.optional().nullable(),
   isActive: z.boolean().optional(),

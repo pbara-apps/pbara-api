@@ -22,6 +22,7 @@ const auditLogSchema = new mongoose.Schema(
         "registration",
         "member",
         "portal_account",
+        "settings",
       ],
     },
     entity_id: { type: String, default: null },

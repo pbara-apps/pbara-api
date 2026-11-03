@@ -12,7 +12,8 @@ export type AuditEntityType =
   | "program"
   | "registration"
   | "member"
-  | "portal_account";
+  | "portal_account"
+  | "settings";
 
 export type AuditActor = {
   id?: string;

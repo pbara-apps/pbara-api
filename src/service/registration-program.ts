@@ -1,6 +1,7 @@
 import RegistrationProgramDao from "@/dao/registration-program";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
 import { normalizeProgramCode } from "@/helpers/registration-code";
+import PaymentAccountService from "@/service/payment-account";
 import { RegistrationProgramTypes } from "@/types/_types";
 
 function slugify(text: string) {
@@ -62,11 +63,11 @@ const RegistrationProgramService = {
   },
 
   async getAll() {
-    return await RegistrationProgramDao.findAll();
+    return await PaymentAccountService.withPaymentAccount(await RegistrationProgramDao.findAll());
   },
 
   async getActive() {
-    return await RegistrationProgramDao.findActive();
+    return await PaymentAccountService.withPaymentAccount(await RegistrationProgramDao.findActive());
   },
 
   async getActiveBySlug(slug: string) {
@@ -74,7 +75,7 @@ const RegistrationProgramService = {
     if (!program) {
       throw httpError("Program not found", 404);
     }
-    return program;
+    return await PaymentAccountService.withPaymentAccount(program);
   },
 
   async getById(id: string) {
@@ -82,7 +83,7 @@ const RegistrationProgramService = {
     if (!program) {
       throw httpError("Program not found", 404);
     }
-    return program;
+    return await PaymentAccountService.withPaymentAccount(program);
   },
 
   async update(id: string, data: Partial<ProgramInput>, actor?: AuditActor) {

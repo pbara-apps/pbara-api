@@ -74,7 +74,8 @@ export interface RegistrationProgramTypes {
   description?: string | null;
   flyerImageUrl?: string | null;
   amount: number;
-  bankDetails: BankDetailsTypes;
+  /** Legacy, optional: the association payment account is used instead. */
+  bankDetails?: BankDetailsTypes | null;
   registrationMode: "single" | "bulk" | "both";
   registrationDeadline?: string | Date | null;
   isActive?: boolean;

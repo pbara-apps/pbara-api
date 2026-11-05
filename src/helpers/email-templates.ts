@@ -1,7 +1,7 @@
 import { mailConfig } from "@/config/mail";
 
-const BRAND = "Royal Ambassadors of Nigeria (PBA-RA)";
-const PRIMARY = "#1e3a8a";
+const BRAND = "Pentecost Baptist Association Royal Ambassadors (PBARA)";
+const PRIMARY = "#1b2452";
 const GOLD = "#d4a017";
 
 const escapeHtml = (s: string) =>
@@ -49,7 +49,7 @@ function layout(opts: { title: string; bodyHtml: string; token?: string }) {
 }
 
 export function welcomeEmail(token: string) {
-  const subject = "Welcome! You're subscribed to PBA-RA updates";
+  const subject = "Welcome! You're subscribed to PBARA updates";
   const html = layout({
     title: subject,
     token,

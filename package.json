@@ -9,7 +9,9 @@
     "start": "tsx src/index.ts",
     "build": "node build.mjs",
     "vercel-build": "node build.mjs",
-    "seed": "tsx src/scripts/seed.ts"
+    "seed": "tsx src/scripts/seed.ts",
+    "migrate:accounts": "tsx src/scripts/migrate-accounts.ts",
+    "email:restructure": "tsx src/scripts/send-restructure-emails.ts"
   },
   "repository": {
     "type": "git",

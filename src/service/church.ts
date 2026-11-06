@@ -1,3 +1,4 @@
+import AccountDao from "@/dao/account";
 import AmbassadorDao from "@/dao/ambassador";
 import ChapterDao from "@/dao/chapter";
 import ChurchDao from "@/dao/church";
@@ -32,10 +33,34 @@ async function deleteChurchSafely(id: string) {
   }
   await ChapterDao.deleteByChurch(id);
   await PortalUserDao.deactivateByChurch(id);
+  await AmbassadorDao.deactivateCounsellorsOfChurch(id, "Church removed");
   return await ChurchDao.deleteChurch(id);
 }
 
 const ChurchService = {
+  /**
+   * Current counsellors of active churches, for the public site.
+   * Only name, photo and church — never contact details.
+   */
+  async getPublicCounsellors() {
+    const accounts = await AccountDao.listActiveCounsellors();
+    return accounts
+      .map((a) => {
+        const church = a.chapterAccess?.church as unknown as
+          | { _id?: unknown; name?: string; status?: string; image?: string | null }
+          | null;
+        const member = a.member as unknown as { photo?: string | null } | null;
+        if (!church?._id || church.status !== "active") return null;
+        return {
+          id: String(a._id),
+          name: a.name,
+          photo: member?.photo ?? null,
+          church: { id: String(church._id), name: church.name ?? "" },
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null)
+      .sort((x, y) => x.church.name.localeCompare(y.church.name));
+  },
   async createChurch(church: ChurchTypes) {
     const created = await ChurchDao.addChurch(church);
     await ChapterService.ensureDefaultChapter(created);

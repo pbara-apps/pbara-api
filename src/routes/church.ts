@@ -12,6 +12,8 @@ import express from "express";
 const router = express.Router();
 
 router.get("/public", ChurchController.getPublicChurches);
+/** Current church counsellors for the public leaders page (no contact details). */
+router.get("/counsellors/public", ChurchController.getPublicCounsellors);
 
 router.post("/create", [
   requireAuth,

@@ -1,3 +1,4 @@
+import { asyncHandler } from "@/helpers/async-handler";
 import ChurchService from "@/service/church";
 import { NextFunction, Request, Response } from "express";
 
@@ -34,6 +35,10 @@ const ChurchController = {
       next(error);
     }
   },
+  getPublicCounsellors: asyncHandler(async (_req, res) => {
+    const data = await ChurchService.getPublicCounsellors();
+    res.status(200).json({ message: "Counsellors fetched successfully", data });
+  }),
   async getPublicChurches(req: Request, res: Response, next: NextFunction) {
     try {
       const churches = await ChurchService.getPublicChurches();

@@ -9,8 +9,6 @@ export interface ExecutiveTypes {
   start_year: number;
   end_year?: number;
   status: "active" | "inactive" | "completed";
-  password: string;
-  role?: "super_admin" | "admin" | "editor" | "finance" | "viewer";
 }
 
 export interface ChurchTypes {

@@ -68,7 +68,7 @@ const registrationSchema = new mongoose.Schema(
     adminNote: { type: String, default: null },
     /** "public" = website form; "chapter_portal" = registered by a chapter officer. */
     source: { type: String, enum: ["public", "chapter_portal"], default: "public" },
-    submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", default: null },
+    submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
   },
   { timestamps: true },
 );

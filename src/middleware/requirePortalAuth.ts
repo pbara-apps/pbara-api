@@ -1,41 +1,28 @@
 import PortalUserDao from "@/dao/portal-user";
-import { verifyToken } from "@/helpers/jw-token";
-import {
-  getPortalUser,
-  PORTAL_TOKEN_KIND,
-  setPortalUser,
-} from "@/helpers/portal-auth-user";
+import { PASSWORD_CHANGE_REQUIRED, readAccountId } from "@/helpers/account-token";
+import { getPortalUser, setPortalUser } from "@/helpers/portal-auth-user";
 import type { PortalRole } from "@/models/portal-user";
 import { NextFunction, Request, Response } from "express";
 
 /**
  * Chapter portal login check.
  *
- * Only accepts portal tokens, then reloads the account from the database
- * so that a replaced or removed officer loses access immediately, not
- * when their token expires.
+ * Accepts the shared account token, then reloads the account so that a
+ * replaced or removed officer loses access immediately, not when their
+ * token expires. Accounts without active chapter access are refused.
  */
 export async function requirePortalAuth(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized", status: false });
-  }
-
-  let userId: string | undefined;
-  try {
-    const decoded = verifyToken(token) as { data?: { kind?: string; id?: string } };
-    if (decoded?.data?.kind !== PORTAL_TOKEN_KIND) throw new Error("Wrong token kind");
-    userId = decoded.data.id;
-  } catch {
+  const userId = readAccountId(req);
+  if (!userId) {
     return res.status(401).json({ message: "Unauthorized", status: false });
   }
 
   try {
-    const user = userId ? await PortalUserDao.findById(userId) : null;
+    const user = await PortalUserDao.findById(userId);
     if (!user || !user.isActive) {
       return res.status(401).json({ message: "Unauthorized", status: false });
     }
@@ -47,6 +34,7 @@ export async function requirePortalAuth(
       churchId: String(user.church),
       chapterId: user.chapter ? String(user.chapter) : null,
       hasChangedPassword: user.has_changed_password,
+      aliases: user.aliases,
     });
     return next();
   } catch (error) {
@@ -65,11 +53,7 @@ export function requirePasswordChanged(
   next: NextFunction,
 ) {
   if (!getPortalUser(req).hasChangedPassword) {
-    return res.status(403).json({
-      message: "Please change your one-time password to continue",
-      code: "PASSWORD_CHANGE_REQUIRED",
-      status: false,
-    });
+    return res.status(403).json(PASSWORD_CHANGE_REQUIRED);
   }
   return next();
 }

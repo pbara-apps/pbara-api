@@ -1,3 +1,4 @@
+import { ACTOR_SELECT } from "@/models/account";
 import AmbassadorDao from "@/dao/ambassador";
 import { logAudit } from "@/helpers/audit-logger";
 import { httpError } from "@/helpers/http-error";
@@ -44,7 +45,7 @@ const MeetingService = {
     const chapterIds = await ChapterService.resolveChapterIds(user, chapterId);
     return await MeetingModel.find({ chapter: { $in: chapterIds } })
       .populate("chapter", "name")
-      .populate("recordedBy", "name role")
+      .populate("recordedBy", ACTOR_SELECT)
       .sort({ date: -1 })
       .limit(200)
       .lean()

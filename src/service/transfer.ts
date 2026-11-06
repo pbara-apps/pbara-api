@@ -1,3 +1,4 @@
+import { ACTOR_SELECT } from "@/models/account";
 import AmbassadorDao from "@/dao/ambassador";
 import ChapterDao from "@/dao/chapter";
 import TransferModel from "@/models/transfer";
@@ -23,7 +24,7 @@ const POPULATE = [
   { path: "member", select: "fullName memberId photo status" },
   { path: "fromChapter", select: "name church", populate: { path: "church", select: "name" } },
   { path: "toChapter", select: "name church", populate: { path: "church", select: "name" } },
-  { path: "requestedBy", select: "name role" },
+  { path: "requestedBy", select: ACTOR_SELECT },
 ];
 
 const TransferService = {

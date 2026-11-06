@@ -1,9 +1,10 @@
+import { ACTOR_SELECT } from "@/models/account";
 import AchievementModel from "@/models/achievement";
 
 const POPULATE = [
   { path: "chapter", select: "name" },
   { path: "church", select: "name" },
-  { path: "createdBy", select: "name role" },
+  { path: "createdBy", select: ACTOR_SELECT },
 ];
 
 /** Database queries for chapter achievements. Newest (by month/year) first. */

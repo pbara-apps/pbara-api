@@ -26,7 +26,7 @@ const dueSchema = new mongoose.Schema(
     appliesTo: { type: String, required: true, enum: ["all", "selected"] },
     targetChurches: [{ type: mongoose.Schema.Types.ObjectId, ref: "Church" }],
     targetChapters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Chapter" }],
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Executive", default: null },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
   },
   { timestamps: true },
 );

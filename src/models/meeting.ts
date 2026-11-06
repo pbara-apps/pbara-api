@@ -15,7 +15,7 @@ const meetingSchema = new mongoose.Schema(
     /** Members of the chapter at the time (to work out the attendance rate). */
     memberCount: { type: Number, required: true, min: 0 },
     visitors: { type: Number, default: 0, min: 0 },
-    recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", default: null },
+    recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
   },
   { timestamps: true },
 );

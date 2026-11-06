@@ -33,7 +33,6 @@ import {
   listMembersSchema,
   memberIdSchema,
   officerIdSchema,
-  portalLoginSchema,
   portalRegistrationListSchema,
   portalRegistrationSchema,
   registeredMembersSchema,
@@ -49,7 +48,7 @@ import express from "express";
  * Mounted at /chapter-portal.
  *
  * Access layers:
- * 1. /auth/login is public.
+ * 1. Sign-in is shared with the admin portal: POST /auth/login.
  * 2. /auth/me and /auth/change-password only need a valid login, so a
  *    first-time user can still set their password.
  * 3. Everything else also requires the one-time password to be changed.
@@ -59,7 +58,6 @@ import express from "express";
 const router = express.Router();
 
 // 1–2. Sign-in and account
-router.post("/auth/login", [validate(portalLoginSchema), PortalAuthController.login]);
 router.get("/auth/me", [requirePortalAuth, PortalAuthController.profile]);
 router.post("/auth/change-password", [
   requirePortalAuth,

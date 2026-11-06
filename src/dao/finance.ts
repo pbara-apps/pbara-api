@@ -1,3 +1,4 @@
+import { ACTOR_SELECT } from "@/models/account";
 import BillModel from "@/models/bill";
 import DueModel from "@/models/due";
 import PaymentModel from "@/models/payment";
@@ -77,7 +78,7 @@ export const PaymentDao = {
   },
   async findByBills(billIds: string[]) {
     return await PaymentModel.find({ bill: { $in: billIds } })
-      .populate("submittedBy", "name role")
+      .populate("submittedBy", ACTOR_SELECT)
       .sort({ createdAt: -1 })
       .lean()
       .exec();
@@ -86,7 +87,7 @@ export const PaymentDao = {
   async listByStatus(status: "pending" | "verified" | "rejected") {
     return await PaymentModel.find({ status })
       .populate({ path: "bill", populate: BILL_POPULATE })
-      .populate("submittedBy", "name role phone")
+      .populate("submittedBy", `${ACTOR_SELECT} phone`)
       .sort({ createdAt: status === "pending" ? 1 : -1 })
       .limit(500)
       .lean()

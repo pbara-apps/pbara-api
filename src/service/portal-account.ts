@@ -1,14 +1,15 @@
+import AmbassadorDao from "@/dao/ambassador";
 import ChapterDao from "@/dao/chapter";
 import ChurchDao from "@/dao/church";
-import PortalUserDao from "@/dao/portal-user";
+import CounterDao from "@/dao/counter";
+import PortalUserDao, { type PortalUserView } from "@/dao/portal-user";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
-import { portalAccountEmail } from "@/helpers/email-templates";
+import { chapterAccessTitle, PORTAL_ROLE_TITLES } from "@/helpers/email-templates";
 import { httpError } from "@/helpers/http-error";
-import { sendMail } from "@/helpers/mailer";
-import { hashPassword } from "@/helpers/password-hasher";
+import { cleanName, formatMemberId, toNameKey } from "@/helpers/member-utils";
 import type { PortalAuthUser } from "@/helpers/portal-auth-user";
-import { generateTempPassword } from "@/helpers/temp-password";
 import type { PortalRole } from "@/models/portal-user";
+import { resendTempPassword, upsertAccountWithAccess, type CredentialDelivery } from "@/service/account";
 import ChapterService from "@/service/chapter";
 
 /**
@@ -19,24 +20,25 @@ import ChapterService from "@/service/chapter";
  * - Counsellor → each chapter's President and Secretary.
  *
  * Each position has exactly one active holder. Assigning someone new to a
- * position deactivates the previous holder, so they can no longer log in.
+ * position removes the previous holder's chapter access (their account and
+ * any admin access stay).
  *
- * New accounts (and password resets) get a one-time password by email and
- * `has_changed_password: false`. If the email can't be sent, the one-time
- * password is returned once in the response so the admin/counsellor can
- * pass it on another way.
+ * Logins are shared accounts (see service/account.ts): the email is looked
+ * up first, and an existing account gets the position added. New accounts
+ * (and password resets) get a one-time password by email. If the email
+ * can't be sent, the one-time password is returned once in the response so
+ * the admin/counsellor can pass it on another way.
+ *
+ * Every counsellor is also an association member: assigning one creates (or
+ * reuses) their counsellor member record. Presidents and secretaries are
+ * picked from the chapter's members.
  */
 
 export type AccountDetails = { name: string; email: string; phone: string };
 
-type PortalUserDoc = NonNullable<Awaited<ReturnType<typeof PortalUserDao.findById>>>;
+type PortalUserDoc = PortalUserView;
 
-/** Result of an action that may have sent a one-time password. */
-export type CredentialDelivery = {
-  emailSent: boolean;
-  /** Only present when the email could not be sent. */
-  temporaryPassword?: string;
-};
+export type { CredentialDelivery };
 
 /** Safe, client-facing view of an account (never includes the password). */
 export function toPublicAccount(user: PortalUserDoc) {
@@ -48,48 +50,29 @@ export function toPublicAccount(user: PortalUserDoc) {
     role: user.role,
     churchId: String(user.church),
     chapterId: user.chapter ? String(user.chapter) : null,
+    memberId: user.member ? String(user.member) : null,
     hasChangedPassword: user.has_changed_password,
     isActive: user.isActive,
     lastLoginAt: user.lastLoginAt,
   };
 }
 
-/** Emails the one-time password. Never throws: a failed email is reported instead. */
-async function deliverTempPassword(
-  user: PortalUserDoc,
-  tempPassword: string,
-  placeName: string,
-): Promise<CredentialDelivery> {
-  try {
-    const mail = portalAccountEmail({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      placeName,
-      tempPassword,
-    });
-    await sendMail({ to: user.email, ...mail });
-    return { emailSent: true };
-  } catch (error) {
-    console.error("[PortalAccount] one-time password email failed:", error);
-    return { emailSent: false, temporaryPassword: tempPassword };
-  }
-}
-
 /**
  * Puts a person into a position (counsellor of a church, or president/secretary
  * of a chapter). Steps:
  * 1. Same email as the current holder → just update their name/phone.
- * 2. Otherwise make sure the email isn't used by another active account.
- * 3. Create the account (or reactivate an old one with this email) with a
- *    fresh one-time password.
- * 4. Deactivate the previous holder, then email the new holder.
+ * 2. Otherwise find the account for this email (or create one) and give it
+ *    the position. An existing account keeps its id and password; a new
+ *    one gets a one-time password by email. An account that already holds
+ *    another chapter position can't take this one.
+ * 3. The previous holder loses chapter access (any admin access they have stays).
  */
 async function fillPosition(opts: {
   role: PortalRole;
   churchId: string;
   chapterId: string | null;
   details: AccountDetails;
+  memberId: string | null;
   currentHolder: PortalUserDoc | null;
   placeName: string;
 }): Promise<{ account: ReturnType<typeof toPublicAccount> } & CredentialDelivery & { replaced: boolean }> {
@@ -99,52 +82,124 @@ async function fillPosition(opts: {
 
   // 1. Same person: update contact details only, keep their password.
   if (opts.currentHolder && opts.currentHolder.email === email) {
-    const updated = await PortalUserDao.update(String(opts.currentHolder._id), { name, phone });
+    const update: Record<string, unknown> = { name, phone };
+    if (opts.memberId) update.member = opts.memberId;
+    const updated = await PortalUserDao.update(String(opts.currentHolder._id), update);
     return { account: toPublicAccount(updated!), emailSent: false, replaced: false };
   }
 
-  // 2. The email must not belong to someone else's active account.
-  const emailOwner = await PortalUserDao.findByEmail(email);
-  if (emailOwner?.isActive) {
-    throw httpError(409, "This email is already used by another portal account");
-  }
-
-  // 3. New account, or reuse an old deactivated one with the same email.
-  const tempPassword = generateTempPassword();
-  const accountData = {
+  // 2. Find or create the account and give it this position.
+  const result = await upsertAccountWithAccess({
     name,
     email,
     phone,
-    password: await hashPassword(tempPassword),
-    role: opts.role,
-    church: opts.churchId,
-    chapter: opts.chapterId,
-  };
-  const account = emailOwner
-    ? await PortalUserDao.update(String(emailOwner._id), {
-        ...accountData,
-        has_changed_password: false,
-        isActive: true,
-      })
-    : await PortalUserDao.create(accountData);
+    chapterAccess: { role: opts.role, church: opts.churchId, chapter: opts.chapterId },
+    member: opts.memberId,
+    accessTitle: chapterAccessTitle(opts.role, opts.placeName),
+    conflictMessage: (a) => {
+      const held = a.chapterAccess?.role ? PORTAL_ROLE_TITLES[a.chapterAccess.role] : "another position";
+      return `${a.name} (${a.email}) is already ${held}. Remove them from that position first.`;
+    },
+  });
+  if (opts.memberId && result.account.member && String(result.account.member) !== opts.memberId) {
+    // Keep the newest link: this person is now in this position as this member.
+    await PortalUserDao.update(String(result.account._id), { member: opts.memberId });
+  }
 
-  // 4. The previous holder loses access only after the new account exists.
+  // 3. The previous holder loses access only after the new holder has it.
   if (opts.currentHolder) {
     await PortalUserDao.update(String(opts.currentHolder._id), { isActive: false });
   }
 
-  const delivery = await deliverTempPassword(account!, tempPassword, opts.placeName);
-  return { account: toPublicAccount(account!), ...delivery, replaced: Boolean(opts.currentHolder) };
+  const account = await PortalUserDao.findById(String(result.account._id));
+  return {
+    account: toPublicAccount(account!),
+    emailSent: result.emailSent,
+    temporaryPassword: result.temporaryPassword,
+    replaced: Boolean(opts.currentHolder),
+  };
 }
 
 /** Gives an account a new one-time password and sends it. */
 async function resetToTempPassword(user: PortalUserDoc, placeName: string) {
-  const tempPassword = generateTempPassword();
-  await PortalUserDao.update(String(user._id), {
-    password: await hashPassword(tempPassword),
-    has_changed_password: false,
+  return await resendTempPassword(String(user._id), chapterAccessTitle(user.role, placeName));
+}
+
+/**
+ * Presidents and secretaries are chosen from the chapter's members, so the
+ * login is tied to the person's member record.
+ */
+async function getChapterMemberOrThrow(memberId: string, chapterId: string) {
+  const member = await AmbassadorDao.findById(memberId);
+  const memberChapter = member ? String((member.chapter as { _id?: unknown })?._id ?? member.chapter) : null;
+  if (!member || memberChapter !== chapterId || member.memberType === "counsellor") {
+    throw httpError(404, "Member not found in this chapter");
+  }
+  if (member.status !== "active" && member.status !== "pending") {
+    throw httpError(400, `${member.fullName} is not a current member of this chapter`);
+  }
+  return member;
+}
+
+/**
+ * Makes sure the counsellor has an active counsellor member record in this
+ * church (with a member ID) and that their account links to it.
+ * Returns the member record id.
+ */
+async function ensureCounsellorMember(opts: {
+  accountId: string;
+  existingMemberId: string | null;
+  name: string;
+  phone: string;
+  photo?: string | null;
+  churchId: string;
+  actor: AuditActor;
+}) {
+  const existing = opts.existingMemberId ? await AmbassadorDao.findById(opts.existingMemberId) : null;
+
+  // Already linked to an ambassador record (rare for an adult): keep that link.
+  if (existing && existing.memberType !== "counsellor") return String(existing._id);
+
+  const fields: Record<string, unknown> = {
+    fullName: cleanName(opts.name),
+    nameKey: toNameKey(opts.name),
+    phone: opts.phone || null,
+    church: opts.churchId,
+    ...(opts.photo !== undefined ? { photo: opts.photo || null } : {}),
+  };
+
+  if (existing) {
+    await AmbassadorDao.update(String(existing._id), {
+      ...fields,
+      status: "active",
+      statusReason: null,
+      ...(existing.memberId ? {} : { memberId: formatMemberId(await CounterDao.next("member-id")) }),
+    });
+    return String(existing._id);
+  }
+
+  const now = new Date();
+  const created = await AmbassadorDao.create({
+    ...fields,
+    memberType: "counsellor",
+    memberId: formatMemberId(await CounterDao.next("member-id")),
+    status: "active",
+    chapter: null,
+    rank: null,
+    reviewedBy: opts.actor.id ?? null,
+    reviewedAt: now,
+    approvedAt: now,
   });
-  return await deliverTempPassword(user, tempPassword, placeName);
+  await PortalUserDao.update(opts.accountId, { member: created._id });
+  await logAudit({
+    action: "created",
+    entityType: "member",
+    entityId: String(created._id),
+    entityTitle: created.fullName,
+    actor: opts.actor,
+    detail: "Counsellor added as an association member",
+  });
+  return String(created._id);
 }
 
 async function getChurchOrThrow(churchId: string) {
@@ -169,22 +224,43 @@ const PortalAccountService = {
   async getCounsellor(churchId: string) {
     await getChurchOrThrow(churchId);
     const counsellor = await PortalUserDao.findActiveCounsellor(churchId);
-    return counsellor ? toPublicAccount(counsellor) : null;
+    if (!counsellor) return null;
+    const member = counsellor.member ? await AmbassadorDao.findById(String(counsellor.member)) : null;
+    return { ...toPublicAccount(counsellor), photo: member?.photo ?? null, memberNumber: member?.memberId ?? null };
   },
 
-  /** Sets (or replaces) a church's counsellor and emails them a one-time password. */
-  async assignCounsellor(churchId: string, details: AccountDetails, actor: AuditActor) {
+  /**
+   * Sets (or replaces) a church's counsellor. Their login is found or created
+   * by email, and their counsellor member record is created (or updated).
+   */
+  async assignCounsellor(
+    churchId: string,
+    details: AccountDetails & { photo?: string | null },
+    actor: AuditActor,
+  ) {
     const church = await getChurchOrThrow(churchId);
     await ChapterService.ensureDefaultChapter(church);
 
+    const currentHolder = await PortalUserDao.findActiveCounsellor(churchId);
     const result = await fillPosition({
       role: "counsellor",
       churchId,
       chapterId: null,
       details,
-      currentHolder: await PortalUserDao.findActiveCounsellor(churchId),
+      memberId: null,
+      currentHolder,
       placeName: church.name,
     });
+    const memberId = await ensureCounsellorMember({
+      accountId: result.account.id,
+      existingMemberId: result.account.memberId,
+      name: result.account.name,
+      phone: result.account.phone,
+      photo: details.photo,
+      churchId,
+      actor,
+    });
+    result.account.memberId = memberId;
 
     // Keep the counsellor name shown on the church record in step.
     await ChurchDao.updateChurch(churchId, { counsellor: result.account.name });
@@ -244,14 +320,18 @@ const PortalAccountService = {
   /** Sets (or replaces) a chapter's president or secretary. */
   async assignChapterOfficer(
     counsellor: PortalAuthUser,
-    input: AccountDetails & { chapterId: string; role: "president" | "secretary" },
+    input: { memberId: string; email: string; phone?: string | null; chapterId: string; role: "president" | "secretary" },
   ) {
     const chapter = await ChapterService.getAccessibleChapter(counsellor, input.chapterId);
+    const member = await getChapterMemberOrThrow(input.memberId, String(chapter._id));
+    const phone = input.phone?.trim() || member.phone || "";
+    if (!phone) throw httpError(400, `Add a phone number for ${member.fullName}`);
     const result = await fillPosition({
       role: input.role,
       churchId: counsellor.churchId,
       chapterId: String(chapter._id),
-      details: input,
+      details: { name: member.fullName, email: input.email, phone },
+      memberId: String(member._id),
       currentHolder: await PortalUserDao.findActiveChapterOfficer(String(chapter._id), input.role),
       placeName: chapter.name,
     });

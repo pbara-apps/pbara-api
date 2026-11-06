@@ -1,14 +1,10 @@
 import { asyncHandler } from "@/helpers/async-handler";
 import { getPortalUser } from "@/helpers/portal-auth-user";
+import AccountAuthService from "@/service/account-auth";
 import PortalAuthService from "@/service/portal-auth";
 
-/** Chapter portal sign-in, profile and password change. */
+/** Chapter portal profile and password change. Sign-in is shared: POST /auth/login. */
 const PortalAuthController = {
-  login: asyncHandler(async (req, res) => {
-    const data = await PortalAuthService.login(req.body.email, req.body.password);
-    res.status(200).json({ message: "Signed in successfully", data });
-  }),
-
   profile: asyncHandler(async (req, res) => {
     const data = await PortalAuthService.getProfile(getPortalUser(req).id);
     res.status(200).json({ message: "Profile fetched successfully", data });
@@ -16,11 +12,9 @@ const PortalAuthController = {
 
   changePassword: asyncHandler(async (req, res) => {
     const { currentPassword, newPassword } = req.body;
-    const data = await PortalAuthService.changePassword(
-      getPortalUser(req).id,
-      currentPassword,
-      newPassword,
-    );
+    const userId = getPortalUser(req).id;
+    await AccountAuthService.changePassword(userId, currentPassword, newPassword);
+    const data = await PortalAuthService.getProfile(userId);
     res.status(200).json({ message: "Password changed successfully", data });
   }),
 };

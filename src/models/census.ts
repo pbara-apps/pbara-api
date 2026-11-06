@@ -18,7 +18,7 @@ const censusSchema = new mongoose.Schema(
         _id: false,
       },
     ],
-    confirmedBy: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", default: null },
+    confirmedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
   },
   { timestamps: true },
 );

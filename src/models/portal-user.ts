@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 /**
+ * LEGACY — chapter portal logins before the shared Account model.
+ * Only the account migration script reads this collection now; live code
+ * uses Account.chapterAccess (see dao/portal-user.ts).
+ *
  * PortalUser — a login for the chapter portal (separate from Executive,
  * which is the association admin login).
  *
@@ -14,8 +18,8 @@ import mongoose from "mongoose";
  * `has_changed_password: false`. The portal blocks everything except
  * "change password" until the user sets their own password.
  */
-export const PORTAL_ROLES = ["counsellor", "president", "secretary"] as const;
-export type PortalRole = (typeof PORTAL_ROLES)[number];
+export { CHAPTER_ROLES as PORTAL_ROLES, type ChapterRole as PortalRole } from "@/models/account";
+import { CHAPTER_ROLES as PORTAL_ROLES } from "@/models/account";
 
 const portalUserSchema = new mongoose.Schema(
   {

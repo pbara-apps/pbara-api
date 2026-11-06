@@ -1,4 +1,5 @@
-import AmbassadorModel, { type AmbassadorStatus } from "@/models/ambassador";
+import { ACTOR_SELECT } from "@/models/account";
+import AmbassadorModel, { type AmbassadorStatus, type MemberType } from "@/models/ambassador";
 import mongoose from "mongoose";
 
 export type AmbassadorFilter = {
@@ -7,6 +8,7 @@ export type AmbassadorFilter = {
   statuses?: AmbassadorStatus[];
   rankId?: string;
   search?: string;
+  memberType?: MemberType;
 };
 
 /** Escapes text so it can be used safely inside a RegExp. */
@@ -18,6 +20,8 @@ function buildQuery(filter: AmbassadorFilter) {
   if (filter.churchId) query.church = filter.churchId;
   if (filter.statuses?.length) query.status = { $in: filter.statuses };
   if (filter.rankId) query.rank = filter.rankId;
+  if (filter.memberType === "ambassador") query.memberType = { $ne: "counsellor" };
+  else if (filter.memberType) query.memberType = filter.memberType;
   if (filter.search?.trim()) {
     const pattern = new RegExp(escapeRegex(filter.search.trim()), "i");
     query.$or = [{ fullName: pattern }, { memberId: pattern }];
@@ -29,7 +33,7 @@ const POPULATE = [
   { path: "rank", select: "name order image maxAge" },
   { path: "chapter", select: "name" },
   { path: "church", select: "name" },
-  { path: "submittedBy", select: "name role" },
+  { path: "submittedBy", select: ACTOR_SELECT },
   { path: "rankHistory.rank", select: "name order image" },
 ];
 
@@ -87,8 +91,20 @@ const AmbassadorDao = {
   async deleteById(id: string) {
     return await AmbassadorModel.findByIdAndDelete(id).exec();
   },
+  /** Ambassadors in a church (used to block deleting a church that has members). */
   async countByChurch(churchId: string) {
-    return await AmbassadorModel.countDocuments({ church: churchId }).exec();
+    return await AmbassadorModel.countDocuments({ church: churchId, memberType: { $ne: "counsellor" } }).exec();
+  },
+  /** Creates one member record directly (e.g. a counsellor). */
+  async create(doc: Record<string, unknown>) {
+    return await AmbassadorModel.create(doc);
+  },
+  /** Counsellor member records of a church (used when the church is removed). */
+  async deactivateCounsellorsOfChurch(churchId: string, reason: string) {
+    return await AmbassadorModel.updateMany(
+      { church: churchId, memberType: "counsellor", status: "active" },
+      { status: "inactive", statusReason: reason },
+    ).exec();
   },
   async countByStatus(filter: AmbassadorFilter) {
     return await AmbassadorModel.countDocuments(buildQuery(filter)).exec();

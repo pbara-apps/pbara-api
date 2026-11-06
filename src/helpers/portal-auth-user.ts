@@ -14,10 +14,9 @@ export type PortalAuthUser = {
   /** Null for a counsellor (church-wide access). */
   chapterId: string | null;
   hasChangedPassword: boolean;
+  /** Older ids of this person (see Account.aliases). */
+  aliases?: string[];
 };
-
-/** Marks a token as a chapter portal token so admin routes can refuse it. */
-export const PORTAL_TOKEN_KIND = "portal";
 
 type RequestWithPortalUser = Request & { portalUser?: PortalAuthUser };
 

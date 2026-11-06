@@ -13,12 +13,12 @@ const announcementSchema = new mongoose.Schema(
     targetChurches: [{ type: mongoose.Schema.Types.ObjectId, ref: "Church" }],
     reads: [
       {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", required: true },
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true },
         readAt: { type: Date, required: true },
         _id: false,
       },
     ],
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Executive", default: null },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
   },
   { timestamps: true },
 );

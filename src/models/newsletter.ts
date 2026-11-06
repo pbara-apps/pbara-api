@@ -15,7 +15,7 @@ const newsletterSchema = new mongoose.Schema(
     failed_count: { type: Number, default: 0 },
     sent_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Executive",
+      ref: "Account",
       default: null,
     },
     sent_by_name: { type: String, default: null },

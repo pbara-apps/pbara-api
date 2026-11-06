@@ -12,7 +12,7 @@ const messageSchema = new mongoose.Schema(
     read_at: { type: Date, default: null },
     read_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Executive",
+      ref: "Account",
       default: null,
     },
   },

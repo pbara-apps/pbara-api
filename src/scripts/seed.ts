@@ -1,6 +1,7 @@
 import "dotenv/config";
 import connectDB from "@/config/db_config";
 import { hashPassword } from "@/helpers/password-hasher";
+import AccountModel from "@/models/account";
 import ChurchModel from "@/models/church";
 import ExecutiveModel from "@/models/executive";
 import OfficeModel from "@/models/offices";
@@ -31,13 +32,23 @@ async function seedChapters() {
   return toInsert.length;
 }
 
+/**
+ * Makes sure a super admin login exists: an Account with super_admin access,
+ * linked to a "Director" executive profile (created if missing).
+ */
 async function seedAdminUser() {
-  const email = process.env.SEED_ADMIN_EMAIL ?? DEFAULT_ADMIN.email;
+  const email = (process.env.SEED_ADMIN_EMAIL ?? DEFAULT_ADMIN.email).trim().toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD ?? DEFAULT_ADMIN.password;
-  const existing = await ExecutiveModel.findOne({ email }).exec();
+
+  const existing = await AccountModel.findOne({ email }).exec();
   if (existing) {
-    if (existing.role !== "super_admin") {
-      existing.role = "super_admin";
+    if (existing.admin?.role !== "super_admin" || !existing.admin?.active) {
+      existing.set("admin", {
+        role: "super_admin",
+        executive: existing.admin?.executive ?? null,
+        is_finance: existing.admin?.is_finance ?? false,
+        active: true,
+      });
       await existing.save();
       return { created: false, email, updatedRole: true };
     }
@@ -55,22 +66,29 @@ async function seedAdminUser() {
     );
   }
 
-  const hashedPassword = await hashPassword(password);
-  const currentYear = new Date().getFullYear();
+  const executive =
+    (await ExecutiveModel.findOne({ email }).exec()) ??
+    (await ExecutiveModel.create({
+      name: DEFAULT_ADMIN.name,
+      email,
+      phone: DEFAULT_ADMIN.phone,
+      office_id: directorOffice._id,
+      church_id: defaultChapter._id,
+      start_year: new Date().getFullYear(),
+      end_year: null,
+      status: "active",
+      title: DEFAULT_ADMIN.title,
+      description: DEFAULT_ADMIN.description,
+    }));
 
-  await ExecutiveModel.create({
-    name: DEFAULT_ADMIN.name,
+  await AccountModel.create({
+    name: executive.name,
     email,
-    phone: DEFAULT_ADMIN.phone,
-    office_id: directorOffice._id,
-    church_id: defaultChapter._id,
-    start_year: currentYear,
-    end_year: null,
-    status: "active",
-    password: hashedPassword,
-    title: DEFAULT_ADMIN.title,
-    description: DEFAULT_ADMIN.description,
-    role: "super_admin",
+    phone: executive.phone,
+    password: await hashPassword(password),
+    // The seed password is known to whoever runs the seed; still ask them to change it.
+    has_changed_password: false,
+    admin: { role: "super_admin", executive: executive._id, is_finance: false, active: true },
   });
 
   return { created: true, email };

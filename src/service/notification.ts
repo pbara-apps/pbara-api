@@ -1,4 +1,4 @@
-import ExecutiveDao from "@/dao/executive";
+import AccountDao from "@/dao/account";
 import NotificationDao, { type Recipient } from "@/dao/notification";
 import PortalUserDao from "@/dao/portal-user";
 import type { ExecutiveRole } from "@/helpers/auth-user";
@@ -40,7 +40,7 @@ const NotificationService = {
   /** Every super admin (they review members and chapter requests). */
   async notifySuperAdmins(content: NotificationContent) {
     try {
-      const ids = await ExecutiveDao.findIdsByRole("super_admin");
+      const ids = await AccountDao.findAdminIdsByRole("super_admin");
       await send(ids.map((id) => ({ type: "executive", id })), content);
     } catch (error) {
       console.error("[Notification] super admin lookup failed:", error);
@@ -50,10 +50,20 @@ const NotificationService = {
   /** Every executive with one of these roles (e.g. finance + admins for payments). */
   async notifyExecutiveRoles(roles: ExecutiveRole[], content: NotificationContent) {
     try {
-      const ids = (await Promise.all(roles.map((r) => ExecutiveDao.findIdsByRole(r)))).flat();
+      const ids = (await Promise.all(roles.map((r) => AccountDao.findAdminIdsByRole(r)))).flat();
       await send(ids.map((id) => ({ type: "executive", id })), content);
     } catch (error) {
       console.error("[Notification] role lookup failed:", error);
+    }
+  },
+
+  /** Every finance officer (Financial Secretary / Treasurer). */
+  async notifyFinanceOfficers(content: NotificationContent) {
+    try {
+      const ids = await AccountDao.findFinanceOfficerIds();
+      await send(ids.map((id) => ({ type: "executive", id })), content);
+    } catch (error) {
+      console.error("[Notification] finance officer lookup failed:", error);
     }
   },
 
@@ -61,8 +71,8 @@ const NotificationService = {
   async notifyAdmins(content: NotificationContent) {
     try {
       const ids = [
-        ...(await ExecutiveDao.findIdsByRole("super_admin")),
-        ...(await ExecutiveDao.findIdsByRole("admin")),
+        ...(await AccountDao.findAdminIdsByRole("super_admin")),
+        ...(await AccountDao.findAdminIdsByRole("admin")),
       ];
       await send(ids.map((id) => ({ type: "executive", id })), content);
     } catch (error) {

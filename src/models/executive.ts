@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+/**
+ * Executive — a public leadership profile (office, church, years, bio).
+ * It is NOT a login: admin portal access lives on Account, which can link
+ * to an executive (see models/account.ts).
+ */
+
 const executiveSchema = new mongoose.Schema(
   {
     image: {
@@ -46,11 +52,6 @@ const executiveSchema = new mongoose.Schema(
       required: true,
       enum: ["active", "inactive", "completed"],
     },
-    password: {
-      type: String,
-      required: true,
-      select: false,
-    },
     title: {
       type: String,
       required: true,
@@ -59,13 +60,6 @@ const executiveSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
-    },
-    role: {
-      type: String,
-      required: true,
-      // finance: manages dues, levies and payment verification; view-only elsewhere.
-      enum: ["super_admin", "admin", "editor", "finance", "viewer"],
-      default: "viewer",
     },
   },
   {

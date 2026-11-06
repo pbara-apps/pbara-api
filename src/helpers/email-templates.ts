@@ -98,10 +98,56 @@ export const PORTAL_ROLE_TITLES: Record<string, string> = {
   secretary: "Chapter Secretary",
 };
 
+const loginUrl = () => `${mailConfig.portalUrl}/login`;
+
+const button = (href: string, label: string) =>
+  `<a href="${href}" style="display:inline-block;background:${GOLD};color:#0f172a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">${escapeHtml(label)}</a>`;
+
+const credentialsTable = (email: string, passwordLabel: string, password?: string) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:#f8fafc;border-radius:8px;padding:12px 16px">
+        <tr><td style="padding:4px 12px 4px 0;color:#64748b">Email</td><td style="padding:4px 0"><strong>${escapeHtml(email)}</strong></td></tr>
+        ${
+          password
+            ? `<tr><td style="padding:4px 12px 4px 0;color:#64748b">${escapeHtml(passwordLabel)}</td><td style="padding:4px 0;font-family:monospace;font-size:16px"><strong>${escapeHtml(password)}</strong></td></tr>`
+            : ""
+        }
+      </table>`;
+
+/** "Chapter President of St Paul's Chapter", "Admin (Editor)", … */
+export function chapterAccessTitle(role: string, placeName: string) {
+  return `${PORTAL_ROLE_TITLES[role] ?? "Officer"} of ${placeName}`;
+}
+
 /**
- * Sent when a chapter portal account is created or its password is reset.
- * Contains the one-time password; the user must change it on first login.
+ * Sent when a NEW account is created (admin or chapter) or its password is
+ * reset. Contains a one-time password; the person must change it on first login.
  */
+export function newAccountEmail(opts: {
+  name: string;
+  email: string;
+  /** e.g. "Counsellor of First Baptist Church" or "Admin portal (Editor)". */
+  accessTitle: string;
+  tempPassword: string;
+}) {
+  const url = loginUrl();
+  const subject = "Your PBARA Portal login";
+  const html = layout({
+    title: subject,
+    bodyHtml: `
+      <h1 style="margin:0 0 16px;font-size:22px;color:${PRIMARY}">Welcome, ${escapeHtml(opts.name)}</h1>
+      <p style="margin:0 0 12px">A PBARA Portal account has been set up for you:
+      <strong>${escapeHtml(opts.accessTitle)}</strong>.</p>
+      <p style="margin:0 0 8px">Use these details to sign in:</p>
+      ${credentialsTable(opts.email, "One-time password", opts.tempPassword)}
+      <p style="margin:0 0 24px">You will be asked to choose your own password the first time you sign in.</p>
+      ${button(url, "Sign in to the PBARA Portal")}
+      <p style="margin:24px 0 0;font-size:13px;color:#64748b">If you weren't expecting this email, you can ignore it.</p>`,
+  });
+  const text = `Welcome, ${opts.name}.\n\nA PBARA Portal account has been set up for you: ${opts.accessTitle}.\n\nEmail: ${opts.email}\nOne-time password: ${opts.tempPassword}\n\nSign in at ${url}. You will be asked to choose your own password the first time you sign in.`;
+  return { subject, html, text };
+}
+
+/** Chapter wording kept for existing callers: counsellor / president / secretary. */
 export function portalAccountEmail(opts: {
   name: string;
   email: string;
@@ -109,40 +155,79 @@ export function portalAccountEmail(opts: {
   placeName: string;
   tempPassword: string;
 }) {
-  const roleTitle = PORTAL_ROLE_TITLES[opts.role] ?? "Officer";
-  const loginUrl = `${mailConfig.portalUrl}/chapter/login`;
-  const subject = "Your RA Chapter Portal login";
+  return newAccountEmail({
+    name: opts.name,
+    email: opts.email,
+    accessTitle: chapterAccessTitle(opts.role, opts.placeName),
+    tempPassword: opts.tempPassword,
+  });
+}
+
+/** Sent when an EXISTING account gets more access. Their password doesn't change. */
+export function accessGrantedEmail(opts: { name: string; email: string; accessTitle: string }) {
+  const url = loginUrl();
+  const subject = "New access on your PBARA Portal account";
   const html = layout({
     title: subject,
     bodyHtml: `
-      <h1 style="margin:0 0 16px;font-size:22px;color:${PRIMARY}">Welcome, ${escapeHtml(opts.name)}</h1>
-      <p style="margin:0 0 12px">A Chapter Portal account has been set up for you as
-      <strong>${escapeHtml(roleTitle)}</strong> of <strong>${escapeHtml(opts.placeName)}</strong>.</p>
-      <p style="margin:0 0 8px">Use these details to sign in:</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:#f8fafc;border-radius:8px;padding:12px 16px">
-        <tr><td style="padding:4px 12px 4px 0;color:#64748b">Email</td><td style="padding:4px 0"><strong>${escapeHtml(opts.email)}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#64748b">One-time password</td><td style="padding:4px 0;font-family:monospace;font-size:16px"><strong>${escapeHtml(opts.tempPassword)}</strong></td></tr>
-      </table>
-      <p style="margin:0 0 24px">You will be asked to choose your own password the first time you sign in.</p>
-      <a href="${loginUrl}" style="display:inline-block;background:${GOLD};color:#0f172a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">Sign in to the Chapter Portal</a>
-      <p style="margin:24px 0 0;font-size:13px;color:#64748b">If you weren't expecting this email, you can ignore it.</p>`,
+      <h1 style="margin:0 0 16px;font-size:22px;color:${PRIMARY}">Hello ${escapeHtml(opts.name)}</h1>
+      <p style="margin:0 0 12px">Your PBARA Portal account now also has access as
+      <strong>${escapeHtml(opts.accessTitle)}</strong>.</p>
+      <p style="margin:0 0 24px">Sign in with your usual email and password. If you have more than one kind of access,
+      you can choose where to go after signing in.</p>
+      ${button(url, "Sign in to the PBARA Portal")}`,
   });
-  const text = `Welcome, ${opts.name}.\n\nA Chapter Portal account has been set up for you as ${roleTitle} of ${opts.placeName}.\n\nEmail: ${opts.email}\nOne-time password: ${opts.tempPassword}\n\nSign in at ${loginUrl}. You will be asked to choose your own password the first time you sign in.`;
+  const text = `Hello ${opts.name},\n\nYour PBARA Portal account now also has access as ${opts.accessTitle}.\nSign in with your usual email and password at ${url}.`;
   return { subject, html, text };
 }
 
-/** Admin "forgot password" email with a one-time reset link. */
+/**
+ * One-off message for people who already had a login before the shared
+ * account system: their password still works, but they must set a new one.
+ */
+export function restructureEmail(opts: {
+  name: string;
+  email: string;
+  accessTitles: string[];
+  /** True when two old logins were merged (either old password works). */
+  merged: boolean;
+}) {
+  const url = loginUrl();
+  const subject = "PBARA Portal: one sign-in for everyone";
+  const accessList = opts.accessTitles.map((t) => `<li style="margin:0 0 4px">${escapeHtml(t)}</li>`).join("");
+  const passwordLine = opts.merged
+    ? "You had two separate logins before. They are now one account, and either of your current passwords will work."
+    : "Your current password still works.";
+  const html = layout({
+    title: subject,
+    bodyHtml: `
+      <h1 style="margin:0 0 16px;font-size:22px;color:${PRIMARY}">Hello ${escapeHtml(opts.name)}</h1>
+      <p style="margin:0 0 12px">We are making a short restructure of the PBARA Portal. The admin portal and the
+      chapter portal now share <strong>one sign-in page</strong>, and every person has one account.</p>
+      <p style="margin:0 0 8px">Your account gives you access as:</p>
+      <ul style="margin:0 0 16px;padding-left:20px">${accessList}</ul>
+      ${credentialsTable(opts.email, "")}
+      <p style="margin:0 0 12px">${escapeHtml(passwordLine)}</p>
+      <p style="margin:0 0 24px">The first time you sign in, you will be asked to choose a new password.</p>
+      ${button(url, "Sign in to the PBARA Portal")}
+      <p style="margin:24px 0 0;font-size:13px;color:#64748b">Thank you for your patience while we improve the portal.</p>`,
+  });
+  const text = `Hello ${opts.name},\n\nWe are making a short restructure of the PBARA Portal. The admin portal and the chapter portal now share one sign-in page, and every person has one account.\n\nYour access:\n${opts.accessTitles.map((t) => `- ${t}`).join("\n")}\n\nEmail: ${opts.email}\n${passwordLine}\nThe first time you sign in, you will be asked to choose a new password.\n\nSign in at ${url}.`;
+  return { subject, html, text };
+}
+
+/** "Forgot password" email with a one-time reset link. */
 export function passwordResetEmail(opts: { name: string; link: string; minutes: number }) {
-  const subject = "Reset your PBARA admin password";
+  const subject = "Reset your PBARA Portal password";
   const html = layout({
     title: subject,
     bodyHtml: `
       <h1 style="margin:0 0 16px;font-size:22px;color:${PRIMARY}">Reset your password</h1>
-      <p style="margin:0 0 12px">Hello ${escapeHtml(opts.name)}, we received a request to reset the password for your admin portal account.</p>
+      <p style="margin:0 0 12px">Hello ${escapeHtml(opts.name)}, we received a request to reset the password for your PBARA Portal account.</p>
       <p style="margin:0 0 24px">This link works once and expires in ${opts.minutes} minutes.</p>
       <a href="${opts.link}" style="display:inline-block;background:${GOLD};color:#0f172a;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">Choose a new password</a>
       <p style="margin:24px 0 0;font-size:13px;color:#64748b">If you didn't ask for this, you can ignore this email — your password won't change.</p>`,
   });
-  const text = `Hello ${opts.name},\n\nReset your admin portal password here (works once, expires in ${opts.minutes} minutes):\n${opts.link}\n\nIf you didn't ask for this, ignore this email.`;
+  const text = `Hello ${opts.name},\n\nReset your PBARA Portal password here (works once, expires in ${opts.minutes} minutes):\n${opts.link}\n\nIf you didn't ask for this, ignore this email.`;
   return { subject, html, text };
 }

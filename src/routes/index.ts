@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import settingsRoutes from "./settings";
+import accountRoutes from "./account";
 import messageRoutes from "./message";
 import uploadRoutes from "./upload";
 import auditRoutes from "./audit";
@@ -29,6 +30,7 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/accounts", accountRoutes);
 router.use("/church", churchRoutes);
 router.use("/office", officeRoutes);
 router.use("/rank", rankRoutes);

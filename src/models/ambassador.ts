@@ -12,7 +12,15 @@ import mongoose from "mongoose";
  * - `transferred` / `inactive` are used later for moves and members who leave.
  *
  * Only `active` members count in chapter and association totals.
+ *
+ * Member types:
+ * - ambassador: a boy in a chapter (needs a chapter and a rank).
+ * - counsellor: the adult counsellor of a church. Church-wide, so no
+ *   chapter or rank; created active when the counsellor is assigned. They
+ *   count in church and association totals, not in chapter totals.
  */
+export const MEMBER_TYPES = ["ambassador", "counsellor"] as const;
+export type MemberType = (typeof MEMBER_TYPES)[number];
 export const AMBASSADOR_STATUSES = [
   "pending",
   "active",
@@ -47,6 +55,7 @@ const chapterMoveSchema = new mongoose.Schema(
 
 const ambassadorSchema = new mongoose.Schema(
   {
+    memberType: { type: String, enum: MEMBER_TYPES, default: "ambassador" },
     /** e.g. PBARA-000123. Given on approval; null while pending. */
     memberId: { type: String, default: null },
     fullName: { type: String, required: true, trim: true },
@@ -62,7 +71,10 @@ const ambassadorSchema = new mongoose.Schema(
     rank: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Rank",
-      required: true,
+      default: null,
+      required: function (this: { memberType?: string }) {
+        return this.memberType !== "counsellor";
+      },
     },
     rankHistory: { type: [rankProgressSchema], default: [] },
     /** Every chapter move (transfers and new-chapter moves). */
@@ -75,7 +87,10 @@ const ambassadorSchema = new mongoose.Schema(
     chapter: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Chapter",
-      required: true,
+      default: null,
+      required: function (this: { memberType?: string }) {
+        return this.memberType !== "counsellor";
+      },
     },
     status: {
       type: String,
@@ -90,12 +105,12 @@ const ambassadorSchema = new mongoose.Schema(
     reviewNote: { type: String, default: null },
     submittedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PortalUser",
+      ref: "Account",
       default: null,
     },
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Executive",
+      ref: "Account",
       default: null,
     },
     reviewedAt: { type: Date, default: null },
@@ -114,6 +129,7 @@ ambassadorSchema.index({ chapter: 1, status: 1 });
 ambassadorSchema.index({ church: 1, status: 1 });
 ambassadorSchema.index({ nameKey: 1, dateOfBirth: 1 });
 ambassadorSchema.index({ status: 1, createdAt: -1 });
+ambassadorSchema.index({ memberType: 1, church: 1 });
 
 const AmbassadorModel = mongoose.model("Ambassador", ambassadorSchema);
 

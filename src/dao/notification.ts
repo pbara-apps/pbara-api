@@ -1,8 +1,15 @@
 import NotificationModel, { type RecipientType } from "@/models/notification";
 
-export type Recipient = { type: RecipientType; id: string };
+/**
+ * Who is reading. `aliases` are older ids of the same person (accounts that
+ * were merged), so notifications sent to an old id still show up.
+ */
+export type Recipient = { type: RecipientType; id: string; aliases?: string[] };
 
-const owner = (r: Recipient) => ({ recipientType: r.type, recipient: r.id });
+const owner = (r: Recipient) => ({
+  recipientType: r.type,
+  recipient: r.aliases?.length ? { $in: [r.id, ...r.aliases] } : r.id,
+});
 
 /** Database queries for in-app notifications. */
 const NotificationDao = {

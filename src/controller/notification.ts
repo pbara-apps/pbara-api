@@ -33,9 +33,11 @@ function makeNotificationController(whoIs: (req: Request) => Recipient) {
 export const AdminNotificationController = makeNotificationController((req) => ({
   type: "executive",
   id: getAuthUser(req)!.id,
+  aliases: getAuthUser(req)!.aliases,
 }));
 
 export const PortalNotificationController = makeNotificationController((req) => ({
   type: "portal_user",
   id: getPortalUser(req).id,
+  aliases: getPortalUser(req).aliases,
 }));

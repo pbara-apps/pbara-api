@@ -4,8 +4,9 @@ import mongoose from "mongoose";
  * Notification — an in-app message for one person, shown in the bell menu
  * of the admin portal or the chapter portal.
  *
- * `recipientType` says which kind of account `recipient` points to:
- * an association admin (Executive) or a chapter portal user (PortalUser).
+ * `recipient` is an Account id. `recipientType` says which portal the
+ * notification belongs to: "executive" = admin portal, "portal_user" =
+ * chapter portal (one person with both kinds of access sees each in its portal).
  */
 export const RECIPIENT_TYPES = ["executive", "portal_user"] as const;
 export type RecipientType = (typeof RECIPIENT_TYPES)[number];

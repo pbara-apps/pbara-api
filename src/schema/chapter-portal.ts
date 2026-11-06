@@ -91,8 +91,12 @@ export const memberIdSchema = z.object({ params: idParam });
 
 // ─── Portal: officers (counsellor only) ────────────────────────────────────
 
+/** Presidents and secretaries are picked from the chapter's members. */
 export const assignOfficerSchema = z.object({
-  body: accountDetails.extend({
+  body: z.object({
+    memberId: objectId,
+    email: z.email("Enter a valid email address"),
+    phone: z.string().trim().max(30).optional().nullable(),
     chapterId: objectId,
     role: z.enum(["president", "secretary"]),
   }),
@@ -106,7 +110,10 @@ export const churchIdSchema = z.object({ params: idParam });
 
 export const assignCounsellorSchema = z.object({
   params: idParam,
-  body: accountDetails,
+  body: accountDetails.extend({
+    /** Shown on the public site's counsellors list. */
+    photo: z.string().trim().url().optional().nullable(),
+  }),
 });
 
 export const recruitmentListSchema = z.object({
@@ -247,6 +254,7 @@ export const adminMemberListSchema = z.object({
     chapterId: objectId.optional(),
     rankId: objectId.optional(),
     status: z.enum(["active", "inactive", "transferred"]).optional(),
+    memberType: z.enum(["ambassador", "counsellor"]).optional(),
     page: z.coerce.number().int().min(1).optional(),
     limit: z.coerce.number().int().min(1).max(5000).optional(),
   }),

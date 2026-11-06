@@ -17,8 +17,8 @@ const paymentSchema = new mongoose.Schema(
     reviewNote: { type: String, default: null },
     /** e.g. RCPT-000042, given on verification. */
     receiptNumber: { type: String, default: null },
-    submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", default: null },
-    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Executive", default: null },
+    submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
     reviewedAt: { type: Date, default: null },
   },
   { timestamps: true },

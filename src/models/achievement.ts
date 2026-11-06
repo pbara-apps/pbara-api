@@ -14,7 +14,7 @@ const achievementSchema = new mongoose.Schema(
     month: { type: Number, required: true, min: 1, max: 12 },
     year: { type: Number, required: true },
     description: { type: String, default: null, trim: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", default: null },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
   },
   { timestamps: true },
 );

@@ -66,7 +66,7 @@ function describeMatch(member: AmbassadorDoc, other: AmbassadorDoc, strength: Ma
   };
 }
 
-type ReviewedMember = { fullName: string; chapter: unknown; church: unknown };
+type ReviewedMember = { fullName: string; chapter?: unknown; church: unknown };
 
 /** "Tunde Ade, Bola Ige and 3 others" */
 function nameList(names: string[]) {

@@ -28,12 +28,12 @@ const chapterSchema = new mongoose.Schema(
 
     // ── New-chapter request fields (empty for the default chapter) ──
     /** The counsellor who asked for this chapter. */
-    requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: "PortalUser", default: null },
+    requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
     /** Members to move into this chapter once it is approved. */
     requestedMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ambassador" }],
     /** Rejection reason from the reviewer. */
     reviewNote: { type: String, default: null },
-    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Executive", default: null },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Account", default: null },
     reviewedAt: { type: Date, default: null },
   },
   { timestamps: true },

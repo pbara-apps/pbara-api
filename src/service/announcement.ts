@@ -1,3 +1,4 @@
+import { ACTOR_SELECT } from "@/models/account";
 import PortalUserDao from "@/dao/portal-user";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
 import { httpError } from "@/helpers/http-error";
@@ -53,7 +54,7 @@ const AnnouncementService = {
   async listForAdmin() {
     const items = await AnnouncementModel.find()
       .populate("targetChurches", "name")
-      .populate("reads.user", "name role")
+      .populate("reads.user", ACTOR_SELECT)
       .sort({ createdAt: -1 })
       .limit(200)
       .lean()

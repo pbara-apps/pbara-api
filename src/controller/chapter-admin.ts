@@ -72,6 +72,7 @@ const ChapterAdminController = {
       chapterId: q.chapterId as string | undefined,
       rankId: q.rankId as string | undefined,
       status: q.status as AmbassadorStatus | undefined,
+      memberType: q.memberType as "ambassador" | "counsellor" | undefined,
       page: q.page ? Number(q.page) : undefined,
       limit: q.limit ? Number(q.limit) : undefined,
     });

@@ -3,7 +3,7 @@ import RankDao from "@/dao/rank";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
 import { httpError } from "@/helpers/http-error";
 import { cleanName, toNameKey } from "@/helpers/member-utils";
-import type { AmbassadorStatus } from "@/models/ambassador";
+import type { AmbassadorStatus, MemberType } from "@/models/ambassador";
 
 /**
  * Association-side member records: the full directory of members across
@@ -31,6 +31,7 @@ const MemberAdminService = {
     chapterId?: string;
     rankId?: string;
     status?: AmbassadorStatus;
+    memberType?: MemberType;
     page?: number;
     limit?: number;
   }) {
@@ -43,6 +44,7 @@ const MemberAdminService = {
         chapterIds: query.chapterId ? [query.chapterId] : undefined,
         rankId: query.rankId,
         statuses: [query.status ?? "active"],
+        memberType: query.memberType,
       },
       page,
       limit,

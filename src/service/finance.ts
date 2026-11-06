@@ -4,7 +4,6 @@ import ChurchDao from "@/dao/church";
 import CounterDao from "@/dao/counter";
 import { BillDao, DueDao, PaymentDao } from "@/dao/finance";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
-import type { ExecutiveRole } from "@/helpers/auth-user";
 import { billBalance, billStatus, formatReceiptNumber } from "@/helpers/bill-status";
 import { httpError } from "@/helpers/http-error";
 import type { PortalAuthUser } from "@/helpers/portal-auth-user";
@@ -19,13 +18,12 @@ import PaymentAccountService from "@/service/payment-account";
  * 1. Finance creates a Due → one Bill per targeted chapter (or church).
  * 2. Chapters/churches see their bills, pay into the association account
  *    and upload proof → a pending Payment (part payments allowed).
- * 3. Finance verifies (adds to amountPaid, issues a receipt number) or
+ * 3. A finance officer (Financial Secretary / Treasurer) verifies (adds to amountPaid, issues a receipt number) or
  *    rejects with a reason.
  * Finance can waive or change a single bill (with a reason) and remind
  * everyone who still owes.
  */
 
-const FINANCE_ROLES: ExecutiveRole[] = ["finance", "super_admin", "admin"];
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 const refId = (ref: unknown) => String((ref as { _id?: unknown })?._id ?? ref);
 const refName = (ref: unknown) => (ref as { name?: string })?.name ?? "";
@@ -381,7 +379,7 @@ const FinanceService = {
       proofUrl: input.proofUrl,
       submittedBy: user.id,
     });
-    await NotificationService.notifyExecutiveRoles(FINANCE_ROLES, {
+    await NotificationService.notifyFinanceOfficers({
       type: "payment.submitted",
       title: "Payment to verify",
       message: `${refName(bill.chapter) || refName(bill.church)} paid ${naira(input.amount)} for ${refName(bill.due)}.`,

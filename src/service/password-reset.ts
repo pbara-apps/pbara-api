@@ -21,10 +21,18 @@ import AccountAuthService from "@/service/account-auth";
  */
 
 const LINK_LIFETIME_MINUTES = 30;
+
+/**
+ * Self-service reset is OFF unless PASSWORD_RESET_EMAILS=on, so the public
+ * form can't be used to burn through the email limit. While it's off,
+ * people ask an admin/counsellor to send them a new one-time password.
+ */
+const resetEmailsEnabled = () => process.env.PASSWORD_RESET_EMAILS === "on";
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
 const PasswordResetService = {
   async request(email: string) {
+    if (!resetEmailsEnabled()) return; // same reply as success, nothing sent
     const account = await AccountDao.findByEmail(email);
     if (!account?.isActive) return; // same outcome as success, on purpose
 

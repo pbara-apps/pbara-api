@@ -1,8 +1,10 @@
-import AmbassadorDao from "@/dao/ambassador";
+import AmbassadorDao, { type AmbassadorFilter } from "@/dao/ambassador";
 import CounterDao from "@/dao/counter";
 import RegistrationDao from "@/dao/registration";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
+import { httpError } from "@/helpers/http-error";
 import { formatMemberId, isSameDay } from "@/helpers/member-utils";
+import mongoose from "mongoose";
 import NotificationService from "@/service/notification";
 
 /**
@@ -21,6 +23,9 @@ import NotificationService from "@/service/notification";
  */
 
 type MatchStrength = "strong" | "possible";
+
+/** Requests returned per page on the Recruitment Board (also the maximum). */
+const REQUESTS_PAGE_SIZE = 100;
 
 type AmbassadorDoc = Awaited<ReturnType<typeof AmbassadorDao.findByNameKeys>>[number];
 
@@ -49,6 +54,26 @@ async function findDuplicates(members: AmbassadorDoc[]) {
     result.set(String(member._id), matches);
   }
   return result;
+}
+
+/**
+ * IDs of every member matching the filter that has at least one possible
+ * duplicate (same rule as `findDuplicates`). Reads only names and dates of
+ * birth, so it stays cheap across the whole queue, not just one page.
+ */
+async function idsWithDuplicates(filter: AmbassadorFilter) {
+  const members = await AmbassadorDao.listMatchFields(filter);
+  if (members.length === 0) return [];
+  const candidates = await AmbassadorDao.findMatchFieldsByNameKeys([...new Set(members.map((m) => m.nameKey))]);
+
+  const byName = new Map<string, typeof candidates>();
+  for (const c of candidates) byName.set(c.nameKey, [...(byName.get(c.nameKey) ?? []), c]);
+
+  return members
+    .filter((m) =>
+      (byName.get(m.nameKey) ?? []).some((c) => String(c._id) !== String(m._id) && matchStrength(m, c) !== null),
+    )
+    .map((m) => String(m._id));
 }
 
 function describeMatch(member: AmbassadorDoc, other: AmbassadorDoc, strength: MatchStrength) {
@@ -120,20 +145,43 @@ async function flagRegistrationsAsNonMember(memberIds: string[]) {
 
 const RecruitmentService = {
   /** Members waiting for review (or rejected), each with its duplicate matches. */
-  async listRequests(query: { status?: "pending" | "rejected"; search?: string; churchId?: string }) {
-    const members = await AmbassadorDao.list(
-      {
-        statuses: [query.status ?? "pending"],
-        search: query.search,
-        churchId: query.churchId,
-      },
-      { createdAt: 1 }, // oldest first, so nobody waits forever
+  /**
+   * One page of requests (100 by default), each with its possible duplicates.
+   * `total` counts the listed requests; `duplicateTotal` counts those with a
+   * possible duplicate across all pages. `duplicatesOnly` lists just those,
+   * sorted by name so entries for the same person sit together.
+   */
+  async listRequests(query: {
+    status?: "pending" | "rejected";
+    search?: string;
+    churchId?: string;
+    duplicatesOnly?: boolean;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(Math.max(1, query.limit ?? REQUESTS_PAGE_SIZE), REQUESTS_PAGE_SIZE);
+    const filter: AmbassadorFilter = {
+      statuses: [query.status ?? "pending"],
+      search: query.search,
+      churchId: query.churchId,
+    };
+    const duplicateIds = await idsWithDuplicates(filter);
+
+    const { items: members, total } = await AmbassadorDao.listPaged(
+      query.duplicatesOnly ? { ...filter, ids: duplicateIds } : filter,
+      page,
+      limit,
+      // Oldest first, so nobody waits forever. _id breaks ties between members
+      // submitted together (same createdAt) so pages don't overlap.
+      query.duplicatesOnly ? { nameKey: 1, createdAt: 1, _id: 1 } : { createdAt: 1, _id: 1 },
     );
     const duplicates = await findDuplicates(members as unknown as AmbassadorDoc[]);
-    return members.map((member) => ({
+    const items = members.map((member) => ({
       ...member.toObject(),
       duplicates: duplicates.get(String(member._id)) ?? [],
     }));
+    return { items, total, duplicateTotal: duplicateIds.length };
   },
 
   /**
@@ -142,46 +190,65 @@ const RecruitmentService = {
    * moment ago) are skipped and counted.
    */
   async approve(ids: string[], actor: AuditActor) {
-    const members = await AmbassadorDao.findByIds(ids);
-    const approvedNames: string[] = [];
-    const approvedMembers: ReviewedMember[] = [];
-    for (const member of members) {
-      if (member.status !== "pending") continue;
-      const memberId = formatMemberId(await CounterDao.next("member-id"));
-      await AmbassadorDao.update(String(member._id), {
-        status: "active",
-        memberId,
-        changesRequested: false,
-        reviewNote: null,
-        reviewedBy: actor.id ?? null,
-        reviewedAt: new Date(),
-        approvedAt: new Date(),
+    let approvedMembers: ReviewedMember[] = [];
+
+    // Everything that changes data runs in one transaction: either every
+    // member is approved (with IDs, registrations and the audit entry) or
+    // nothing is. If another admin approves the same members at the same
+    // moment, MongoDB reports a write conflict and withTransaction re-runs
+    // this block; those members are then no longer pending and are skipped.
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        approvedMembers = []; // reset in case this block is retried
+
+        const pending = await AmbassadorDao.findPendingByIds(ids, session);
+        if (pending.length === 0) return;
+
+        const { first } = await CounterDao.reserve("member-id", pending.length, session);
+        const approvals = pending.map((m, i) => ({ id: String(m._id), memberId: formatMemberId(first + i) }));
+        const changed = await AmbassadorDao.approveMany(
+          approvals,
+          { reviewedBy: actor.id ?? null, at: new Date() },
+          session,
+        );
+        // Should not happen inside a transaction; abort rather than leave
+        // reserved member IDs unused.
+        if (changed !== pending.length) {
+          throw httpError(409, "Some members changed while approving. Please refresh and try again.");
+        }
+
+        // Program registrations made while they were pending now count as members.
+        await RegistrationDao.setMembershipForAmbassadors(
+          approvals.map((a) => a.id),
+          "member",
+          session,
+        );
+        await logAudit(
+          {
+            action: "updated",
+            entityType: "member",
+            entityTitle: pending.length === 1 ? pending[0].fullName : `${pending.length} members`,
+            actor,
+            detail: "Approved as association members",
+          },
+          session,
+        );
+        approvedMembers = pending;
       });
-      approvedNames.push(member.fullName);
-      approvedMembers.push(member);
+    } finally {
+      await session.endSession();
     }
-    if (approvedNames.length > 0) {
-      await logAudit({
-        action: "updated",
-        entityType: "member",
-        entityTitle:
-          approvedNames.length === 1 ? approvedNames[0] : `${approvedNames.length} members`,
-        actor,
-        detail: "Approved as association members",
-      });
-    }
-    // Program registrations made while they were pending now count as members.
-    await RegistrationDao.setMembershipForAmbassadors(
-      approvedMembers.map((m) => String((m as { _id?: unknown })._id)),
-      "member",
-    );
+
+    // Notifications only after the commit, so a retried or failed
+    // transaction never tells a chapter about an approval that didn't happen.
     await notifyChapters(approvedMembers, (names) => ({
       type: "members.approved",
       title: "Members approved",
       message: `${nameList(names)} ${names.length === 1 ? "is" : "are"} now approved association member${names.length === 1 ? "" : "s"}.`,
       link: "/chapter/members",
     }));
-    return { approved: approvedNames.length, skipped: ids.length - approvedNames.length };
+    return { approved: approvedMembers.length, skipped: ids.length - approvedMembers.length };
   },
 
   /**

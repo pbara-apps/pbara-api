@@ -4,6 +4,7 @@ import requireRole from "@/middleware/requireRole";
 import requireSuperAdmin from "@/middleware/requireSuperAdmin";
 import validate from "@/middleware/validate";
 import {
+  addMembersSchema,
   adminAchievementListSchema,
   adminMemberListSchema,
   adminMemberStatusSchema,
@@ -84,8 +85,10 @@ router.post("/chapter-requests/:id/reject", [
 
 router.get("/overview", [requireAuth, canViewBoard, ChapterAdminController.overview]);
 
-// Member directory: everyone can view; super_admin and admin can correct.
+// Member directory: everyone can view; super_admin and admin can add and correct.
+// Added members start pending and go to the Recruitment Board.
 router.get("/members", [requireAuth, canViewBoard, validate(adminMemberListSchema), ChapterAdminController.listMembers]);
+router.post("/members", [requireAuth, adminOrSuperAdmin, validate(addMembersSchema), ChapterAdminController.addMembers]);
 router.get("/members/:id", [requireAuth, canViewBoard, validate(memberIdSchema), ChapterAdminController.getMember]);
 router.patch("/members/:id", [
   requireAuth,

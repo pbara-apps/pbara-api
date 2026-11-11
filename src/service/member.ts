@@ -1,6 +1,6 @@
 import AmbassadorDao from "@/dao/ambassador";
 import RankDao from "@/dao/rank";
-import { logAudit } from "@/helpers/audit-logger";
+import { type AuditActor, logAudit } from "@/helpers/audit-logger";
 import { httpError } from "@/helpers/http-error";
 import { cleanName, toNameKey } from "@/helpers/member-utils";
 import type { PortalAuthUser } from "@/helpers/portal-auth-user";
@@ -12,8 +12,9 @@ import NotificationService from "@/service/notification";
  * Member service — the chapter portal's view of ambassadors.
  *
  * Rules:
- * - Every member added from the portal starts as `pending`; only a
- *   super_admin can approve them (see recruitment service).
+ * - Every member added from the portal (or by an admin, see member-admin
+ *   service) starts as `pending`; only a super_admin can approve them
+ *   (see recruitment service).
  * - Officers only see and change members in chapters they have access to.
  * - Pending and rejected members can be fully edited. Saving a member that
  *   was rejected or sent back for changes resubmits it for review.
@@ -118,6 +119,18 @@ const MemberService = {
    */
   async addMembers(user: PortalAuthUser, chapterId: string, members: MemberInput[]) {
     const chapter = await ChapterService.getAccessibleChapter(user, chapterId);
+    return await MemberService.createPending(chapter, members, actorOf(user));
+  },
+
+  /**
+   * Saves members into a chapter as `pending` and asks super admins to
+   * review them. Callers check the chapter and who may add to it first.
+   */
+  async createPending(
+    chapter: { _id: unknown; name: string; church: unknown },
+    members: MemberInput[],
+    actor: AuditActor,
+  ) {
     await assertRanksExist(members.map((m) => m.rankId));
 
     const docs = members.map((member) => ({
@@ -127,7 +140,7 @@ const MemberService = {
       church: chapter.church,
       chapter: chapter._id,
       status: "pending",
-      submittedBy: user.id,
+      submittedBy: actor.id ?? null,
     }));
     const created = await AmbassadorDao.createMany(docs);
 
@@ -136,7 +149,7 @@ const MemberService = {
       entityType: "member",
       entityTitle:
         created.length === 1 ? String(created[0].fullName) : `${created.length} members`,
-      actor: actorOf(user),
+      actor,
       detail: `Submitted for approval in ${chapter.name}`,
     });
     await NotificationService.notifySuperAdmins({

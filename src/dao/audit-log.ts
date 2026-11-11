@@ -1,3 +1,4 @@
+import type { ClientSession } from "mongoose";
 import AuditLogModel from "@/models/audit-log";
 import type { AuditAction, AuditEntityType } from "@/helpers/audit-logger";
 
@@ -12,8 +13,10 @@ type AuditPayload = {
 };
 
 const AuditLogDao = {
-  async create(entry: AuditPayload) {
-    return await AuditLogModel.create(entry);
+  async create(entry: AuditPayload, session?: ClientSession) {
+    // The array form is the one that accepts a session.
+    const [doc] = await AuditLogModel.create([entry], { session });
+    return doc;
   },
   async findAll(limit = 100) {
     return await AuditLogModel.find()

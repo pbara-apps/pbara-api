@@ -1,9 +1,12 @@
 import AmbassadorDao from "@/dao/ambassador";
+import ChapterDao from "@/dao/chapter";
 import RankDao from "@/dao/rank";
 import { AuditActor, logAudit } from "@/helpers/audit-logger";
 import { httpError } from "@/helpers/http-error";
 import { cleanName, toNameKey } from "@/helpers/member-utils";
 import type { AmbassadorStatus, MemberType } from "@/models/ambassador";
+import MemberService, { type MemberInput } from "@/service/member";
+import NotificationService from "@/service/notification";
 
 /**
  * Association-side member records: the full directory of members across
@@ -49,6 +52,25 @@ const MemberAdminService = {
       page,
       limit,
     );
+  },
+
+  /**
+   * Adds members to any active chapter. Like chapter submissions they start
+   * as `pending` and go to the Recruitment Board for a super admin to approve.
+   */
+  async addMembers(chapterId: string, members: MemberInput[], actor: AuditActor) {
+    const chapter = await ChapterDao.findById(chapterId);
+    if (!chapter || chapter.status !== "active") throw httpError(404, "Chapter not found");
+
+    const created = await MemberService.createPending(chapter, members, actor);
+    const count = created.length;
+    await NotificationService.notifyChapterOfficers([String(chapter._id)], [String(chapter.church)], {
+      type: "members.added_by_association",
+      title: "Members added by the association",
+      message: `The association added ${count} member${count === 1 ? "" : "s"} to ${chapter.name}. ${count === 1 ? "It is" : "They are"} waiting for approval.`,
+      link: "/chapter/members?view=awaiting",
+    });
+    return created;
   },
 
   async get(id: string) {

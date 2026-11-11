@@ -24,9 +24,13 @@ const connectDB = async () => {
   }
 
   if (!cached.promise) {
+    const DB_NAME = process.env.DB_NAME;
+    if (!DB_NAME) {
+      throw new Error("DB_NAME is not set");
+    }
     cached.promise = mongoose
       .connect(DB_URI, {
-        dbName: "pbara_db",
+        dbName: DB_NAME,
         serverSelectionTimeoutMS: 10000,
       })
       .then((conn) => {

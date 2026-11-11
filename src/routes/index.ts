@@ -54,6 +54,7 @@ router.use("/finance", financeRoutes);
 router.use("/engagement", engagementRoutes);
 
 router.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  process.env.NODE_ENV !== "production" && console.error("[API Error]", err);
   const safeMessage =
     err?.status && err.status < 500
       ? err.message

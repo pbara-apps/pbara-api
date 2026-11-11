@@ -121,6 +121,10 @@ export const recruitmentListSchema = z.object({
     status: z.enum(["pending", "rejected"]).optional(),
     search: z.string().trim().max(100).optional(),
     churchId: objectId.optional(),
+    /** "only" lists just the members that have a possible duplicate. */
+    duplicates: z.enum(["only"]).optional(),
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
   }),
 });
 

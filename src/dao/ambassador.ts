@@ -1,8 +1,9 @@
 import { ACTOR_SELECT } from "@/models/account";
 import AmbassadorModel, { type AmbassadorStatus, type MemberType } from "@/models/ambassador";
-import mongoose from "mongoose";
+import mongoose, { type ClientSession } from "mongoose";
 
 export type AmbassadorFilter = {
+  ids?: string[];
   chapterIds?: string[];
   churchId?: string;
   statuses?: AmbassadorStatus[];
@@ -16,6 +17,7 @@ const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"
 
 function buildQuery(filter: AmbassadorFilter) {
   const query: Record<string, unknown> = {};
+  if (filter.ids) query._id = { $in: filter.ids };
   if (filter.chapterIds) query.chapter = { $in: filter.chapterIds };
   if (filter.churchId) query.church = filter.churchId;
   if (filter.statuses?.length) query.status = { $in: filter.statuses };
@@ -48,13 +50,61 @@ const AmbassadorDao = {
   async findByIds(ids: string[]) {
     return await AmbassadorModel.find({ _id: { $in: ids } }).exec();
   },
+  /**
+   * The members in `ids` that are still pending, oldest submission first
+   * (so earlier submissions get lower member IDs). Only the fields approval needs.
+   */
+  async findPendingByIds(ids: string[], session?: ClientSession) {
+    return await AmbassadorModel.find({ _id: { $in: ids }, status: "pending" })
+      .select("fullName chapter church")
+      .sort({ createdAt: 1, _id: 1 })
+      .session(session ?? null)
+      .exec();
+  },
+  /**
+   * Approves members in one bulk write. Each update only applies while the
+   * member is still pending; returns how many were changed.
+   */
+  async approveMany(
+    approvals: { id: string; memberId: string }[],
+    review: { reviewedBy: string | null; at: Date },
+    session?: ClientSession,
+  ) {
+    const { ObjectId } = mongoose.Types;
+    const reviewedBy = review.reviewedBy ? new ObjectId(review.reviewedBy) : null;
+    const result = await AmbassadorModel.bulkWrite(
+      approvals.map(({ id, memberId }) => ({
+        updateOne: {
+          filter: { _id: new ObjectId(id), status: "pending" as const },
+          update: {
+            $set: {
+              status: "active" as const,
+              memberId,
+              changesRequested: false,
+              reviewNote: null,
+              reviewedBy,
+              reviewedAt: review.at,
+              approvedAt: review.at,
+            },
+          },
+        },
+      })),
+      { session },
+    );
+    return result.modifiedCount;
+  },
   /** One page of members plus the total count (for large association-wide lists). */
-  async listPaged(filter: AmbassadorFilter, page: number, limit: number) {
+  async listPaged(
+    filter: AmbassadorFilter,
+    page: number,
+    limit: number,
+    sort: Record<string, 1 | -1> = { fullName: 1 },
+  ) {
     const query = buildQuery(filter);
     const [items, total] = await Promise.all([
       AmbassadorModel.find(query)
         .populate(POPULATE)
-        .sort({ fullName: 1 })
+        .sort(sort)
         .skip((page - 1) * limit)
         .limit(limit)
         .exec(),
@@ -81,6 +131,17 @@ const AmbassadorDao = {
         { path: "chapter", select: "name" },
         { path: "church", select: "name" },
       ])
+      .exec();
+  },
+  /** Only the fields the duplicate check compares, for members matching the filter. */
+  async listMatchFields(filter: AmbassadorFilter) {
+    return await AmbassadorModel.find(buildQuery(filter)).select("nameKey dateOfBirth").lean().exec();
+  },
+  /** Same as `findByNameKeys`, but only the fields the duplicate check compares. */
+  async findMatchFieldsByNameKeys(nameKeys: string[]) {
+    return await AmbassadorModel.find({ nameKey: { $in: nameKeys }, status: { $ne: "rejected" } })
+      .select("nameKey dateOfBirth")
+      .lean()
       .exec();
   },
   async update(id: string, data: Record<string, unknown>) {

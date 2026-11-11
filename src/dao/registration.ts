@@ -1,6 +1,6 @@
 import RegistrationModel from "@/models/registration";
 import { RegistrationTypes } from "@/types/_types";
-import mongoose from "mongoose";
+import mongoose, { type ClientSession } from "mongoose";
 
 type RegistrationPayload = Partial<RegistrationTypes> & {
   status?: "pending" | "verified" | "rejected";
@@ -140,11 +140,12 @@ const RegistrationDao = {
   async setMembershipForAmbassadors(
     ambassadorIds: string[],
     membership: "member" | "pending" | "non_member",
+    session?: ClientSession,
   ) {
     return await RegistrationModel.updateMany(
       { "entries.ambassador": { $in: ambassadorIds } },
       { $set: { "entries.$[entry].membership": membership } },
-      { arrayFilters: [{ "entry.ambassador": { $in: ambassadorIds } }] },
+      { arrayFilters: [{ "entry.ambassador": { $in: ambassadorIds } }], session },
     ).exec();
   },
   async countPending() {

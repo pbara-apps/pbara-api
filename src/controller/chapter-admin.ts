@@ -78,6 +78,14 @@ const ChapterAdminController = {
     });
     res.status(200).json({ message: "Members fetched successfully", data });
   }),
+  addMembers: asyncHandler(async (req, res) => {
+    const data = await MemberAdminService.addMembers(req.body.chapterId, req.body.members, getActor(req));
+    const count = data.length;
+    res.status(201).json({
+      message: `${count} member${count === 1 ? "" : "s"} sent to the Recruitment Board`,
+      data,
+    });
+  }),
   getMember: asyncHandler(async (req, res) => {
     const data = await MemberAdminService.get(req.params.id as string);
     res.status(200).json({ message: "Member fetched successfully", data });
@@ -129,6 +137,9 @@ const ChapterAdminController = {
       status: req.query.status as "pending" | "rejected" | undefined,
       search: req.query.search as string | undefined,
       churchId: req.query.churchId as string | undefined,
+      duplicatesOnly: req.query.duplicates === "only",
+      page: req.query.page ? Number(req.query.page) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
     });
     res.status(200).json({ message: "Requests fetched successfully", data });
   }),
